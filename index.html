@@ -4,19 +4,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>陸上ダービー ベットシステム</title>
-  <meta name="description" content="陸上競技のレース結果を予想してポイントを賭けるダービーシステム" />
+  <title>ALL KEIO DERBY</title>
+  <meta name="description" content="ALL KEIO DERBY Betting System" />
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet" />
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          fontFamily: { 
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          },
           colors: {
             brand: {
               50: '#eef2ff',
@@ -36,6 +39,12 @@
     }
   </script>
   <style>
+    .font-logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
     /* ===== カスタムアニメーション ===== */
     .fade-in {
       animation: fadeIn 0.35s ease-out forwards;
@@ -71,9 +80,9 @@
 
     /* グラスモーフィズム */
     .glass {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     /* カスタムスクロールバー非表示 */
@@ -100,15 +109,14 @@
   </style>
 </head>
 
-<body class="font-sans text-gray-800 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen">
+<body class="font-sans text-gray-800 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 min-h-screen">
 
   <!-- ===== ログインモーダル ===== -->
-  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="glass rounded-2xl shadow-2xl p-8 w-[340px] slide-up border border-white/20">
+  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
+    <div class="glass rounded-2xl shadow-2xl p-8 w-[340px] slide-up border border-white/30">
       <div class="text-center mb-6">
-        <div class="text-4xl mb-2">🏃‍♂️</div>
-        <h1 class="text-2xl font-extrabold text-gray-900">陸上ダービー</h1>
-        <p class="text-sm text-gray-500 mt-1">ログインしてベットを始めよう</p>
+        <h1 class="text-2xl font-logo text-gray-900 tracking-wider">ALL KEIO DERBY</h1>
+        <p class="text-xs text-gray-500 uppercase tracking-widest mt-1">Betting System</p>
       </div>
       <form id="loginForm" class="space-y-4">
         <div>
@@ -135,35 +143,36 @@
   <!-- ===== メインコンテンツ ===== -->
   <div id="app" class="hidden max-w-md mx-auto pb-8">
     <!-- ヘッダー -->
-    <header class="sticky top-0 z-40 glass border-b border-white/10 px-4 py-3 flex items-center justify-between">
+    <header class="sticky top-0 z-40 glass border-b border-white/20 px-4 py-3 flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-2">
-        <span class="text-2xl">🏃‍♂️</span>
-        <h1 class="text-lg font-extrabold text-gray-900">陸上ダービー</h1>
+        <h1 class="text-lg font-logo text-gray-900 tracking-wider">ALL KEIO DERBY</h1>
       </div>
       <div class="flex items-center gap-2">
-        <span id="userPoints" class="text-sm font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">-- pt</span>
-        <button id="refreshBtn" class="text-xs bg-white/20 hover:bg-white/30 text-white p-1.5 rounded-lg transition" title="手動更新">🔄</button>
-        <button id="logoutBtn" class="text-xs text-gray-400 hover:text-red-500 transition" title="ログアウト">🚪</button>
+        <span id="userPoints" class="text-sm font-extrabold text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">-- pt</span>
+        <button id="refreshBtn" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="手動更新">更新</button>
+        <button id="logoutBtn" class="text-xs bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 font-bold px-2 py-1.5 rounded-lg transition" title="ログアウト">退出</button>
       </div>
     </header>
 
     <!-- 締切1分前・点滅警告バー -->
-    <div id="warningBanner" class="hidden sticky top-[57px] z-30 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 text-white font-extrabold text-xs py-2 px-4 text-center shadow-lg animate-pulse flex items-center justify-center gap-1.5 border-b border-amber-300/40">
-      <span class="text-sm">⚠️</span>
+    <div id="warningBanner" class="hidden sticky top-[57px] z-30 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 text-white font-black text-xs py-2 px-4 text-center shadow-lg animate-pulse border-b border-amber-300/40">
       <span id="warningText">まもなく締め切り！急いでベットしよう！</span>
     </div>
 
     <!-- タブ切り替え -->
-    <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1">
+    <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1 border border-white/10">
       <button id="tabBet"
-        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow">🎯
-        ベット</button>
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-extrabold transition-all bg-white text-brand-700 shadow">
+        BET
+      </button>
       <button id="tabHistory"
-        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white">📜
-        履歴</button>
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-extrabold transition-all text-white/70 hover:text-white">
+        HISTORY
+      </button>
       <button id="tabRanking"
-        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white">🏆
-        順位表</button>
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-extrabold transition-all text-white/70 hover:text-white">
+        RANKING
+      </button>
     </div>
 
     <!-- ベット画面 -->
@@ -657,7 +666,7 @@
     // ========================================
     function showToast(message) {
       const toast = document.createElement('div');
-      toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-green-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg slide-up';
+      toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl shadow-2xl border border-white/20 slide-up';
       toast.textContent = message;
       document.body.appendChild(toast);
       setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; }, 2000);
@@ -670,7 +679,7 @@
     async function loadRanking() {
       const body = $('rankingBody');
       const myRankCard = $('myRankCard');
-      body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm">読み込み中...</td></tr>';
+      body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm font-medium">読み込み中...</td></tr>';
       myRankCard.classList.add('hidden');
 
       const currentUserName = (localStorage.getItem('userName') || localStorage.getItem('userId') || '').replace(/[\s\u3000]/g, '').toLowerCase();
@@ -687,8 +696,7 @@
         let myRankNumber = 0;
 
         data.forEach((user, i) => {
-          const medals = ['🥇', '🥈', '🥉'];
-          const rankDisplay = medals[i] || (i + 1);
+          const rankDisplay = i + 1;
           const rawUserName = user['カタカナ名'] || user['名前'] || user['ユーザー名'] || user['ID'] || Object.values(user)[0] || 'ゲスト';
           const cleanName = String(rawUserName).replace(/[\s\u3000]/g, '').toLowerCase();
           const points = user['所持ポイント'] !== undefined ? user['所持ポイント'] : (user['ポイント'] !== undefined ? user['ポイント'] : 0);
@@ -708,12 +716,12 @@
           }
 
           tr.innerHTML = `
-            <td class="px-4 py-3 font-bold">${rankDisplay}</td>
+            <td class="px-4 py-3 font-extrabold">${rankDisplay}</td>
             <td class="px-4 py-3 font-medium text-white flex items-center gap-1.5">
               ${rawUserName}
-              ${isMe ? '<span class="bg-amber-400 text-gray-900 text-[10px] font-extrabold px-1.5 py-0.5 rounded">あなた</span>' : ''}
+              ${isMe ? '<span class="bg-amber-400 text-gray-900 text-[10px] font-black px-1.5 py-0.5 rounded">YOU</span>' : ''}
             </td>
-            <td class="px-4 py-3 text-right font-bold text-brand-300">${points} pt</td>
+            <td class="px-4 py-3 text-right font-extrabold text-brand-300">${points} pt</td>
           `;
           body.appendChild(tr);
         });
@@ -723,20 +731,20 @@
           myRankCard.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-900 font-black text-lg shadow">
-                  ${myData.rankDisplay}
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-950 font-logo text-base shadow">
+                  #${myData.rankDisplay}
                 </div>
                 <div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold text-amber-300">⭐ あなたの現在順位</span>
-                    <span class="text-[10px] bg-amber-400 text-gray-900 font-bold px-1.5 rounded-full">第 ${myData.rank} 位</span>
+                    <span class="text-[10px] uppercase font-extrabold tracking-wider text-amber-300">YOUR RANKING</span>
+                    <span class="text-[10px] bg-amber-400 text-gray-900 font-black px-1.5 rounded-md">RANK ${myData.rank}</span>
                   </div>
                   <p class="font-extrabold text-white text-base">${myData.name}</p>
                 </div>
               </div>
               <div class="text-right">
-                <span class="text-xs text-amber-200 block font-medium">所持ポイント</span>
-                <span class="text-lg font-black text-amber-300">${myData.points} pt</span>
+                <span class="text-[10px] text-amber-200 uppercase tracking-wider block font-bold">TOTAL POINTS</span>
+                <span class="text-lg font-black text-amber-300 font-logo">${myData.points} PT</span>
               </div>
             </div>
           `;
