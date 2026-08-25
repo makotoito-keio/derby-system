@@ -116,8 +116,10 @@
     <div class="glass rounded-2xl shadow-2xl p-8 w-[340px] slide-up border border-white/30">
       <div class="text-center mb-6">
         <h1 class="text-2xl font-logo text-gray-900 tracking-wider">ALL KEIO DERBY</h1>
-        <p class="text-xs text-gray-500 uppercase tracking-widest mt-1">Betting System</p>
+        <p id="loginSubtitle" class="text-xs text-gray-500 uppercase tracking-widest mt-1">Betting System</p>
       </div>
+
+      <!-- 通常ログインフォーム -->
       <form id="loginForm" class="space-y-4">
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginName">お名前（カタカナ）</label>
@@ -125,17 +127,42 @@
             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
             placeholder="例: ヤマダ タロウ" required />
         </div>
-        <div>
+        <div id="pinContainer">
           <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginPin">暗証番号 (4桁)</label>
           <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="loginPin" name="loginPin"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
-            placeholder="••••" required />
+            placeholder="••••" />
+          <p class="text-[11px] text-gray-400 mt-1">※初めての方は名前を入力してログインを押してください</p>
         </div>
         <button type="submit" id="loginBtn"
           class="w-full bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold rounded-lg py-2.5 hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
           ログイン
         </button>
       </form>
+
+      <!-- 初回パスワード設定フォーム (初期は非表示) -->
+      <form id="firstTimeForm" class="space-y-4 hidden">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-xs font-bold text-center">
+          🎉 初回ログインです！<br>ご希望の暗証番号 (4桁) を設定してください。
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="newPin">新しい暗証番号 (4桁)</label>
+          <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="newPin"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
+            placeholder="••••" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="confirmPin">確認のため再入力</label>
+          <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="confirmPin"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
+            placeholder="••••" required />
+        </div>
+        <button type="submit" id="savePinBtn"
+          class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-gray-950 font-black rounded-lg py-2.5 hover:from-amber-600 hover:to-amber-700 active:scale-[0.98] transition-all shadow-lg shadow-amber-500/30">
+          暗証番号を設定して開始
+        </button>
+      </form>
+
       <p id="loginError" class="text-red-500 text-xs text-center mt-3 hidden"></p>
     </div>
   </div>
@@ -263,13 +290,14 @@
       return await res.json();
     }
 
+    let firstTimeUserName = '';
+
     $('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const name = $('loginName').value.trim();
       const pin = $('loginPin').value.trim();
-      if (!name || !pin) return;
+      if (!name) return;
 
-      // ボタンを無効化してローディング表示
       const loginBtn = $('loginBtn');
       loginBtn.disabled = true;
       loginBtn.innerHTML = '<span class="spinner"></span> 認証中...';
@@ -277,15 +305,25 @@
 
       try {
         const result = await verifyLogin(name, pin);
+
         if (result.success) {
-          localStorage.setItem('userName', result.name || name);
-          localStorage.setItem('userPin', pin);
-          $('loginModal').classList.add('hidden');
-          $('app').classList.remove('hidden');
-          $('userPoints').textContent = result.points + ' pt';
-          await initApp();
+          if (result.isFirstTime) {
+            // 初回ログイン ➔ パスワード設定画面を表示
+            firstTimeUserName = result.name || name;
+            $('loginForm').classList.add('hidden');
+            $('firstTimeForm').classList.remove('hidden');
+            $('loginSubtitle').textContent = 'INITIAL SETUP';
+          } else {
+            // 2回目以降 ➔ 通常ログイン完了
+            localStorage.setItem('userName', result.name || name);
+            localStorage.setItem('userPin', pin);
+            $('loginModal').classList.add('hidden');
+            $('app').classList.remove('hidden');
+            $('userPoints').textContent = result.points + ' pt';
+            await initApp();
+          }
         } else {
-          $('loginError').textContent = result.message || '名前またはPINが間違っています';
+          $('loginError').textContent = result.message || '名前または暗証番号が間違っています';
           $('loginError').classList.remove('hidden');
         }
       } catch (err) {
@@ -294,6 +332,64 @@
       } finally {
         loginBtn.disabled = false;
         loginBtn.textContent = 'ログイン';
+      }
+    });
+
+    // 初回パスワード設定の保存処理
+    $('firstTimeForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const newPin = $('newPin').value.trim();
+      const confirmPin = $('confirmPin').value.trim();
+
+      if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
+        $('loginError').textContent = '4桁の数字を入力してください';
+        $('loginError').classList.remove('hidden');
+        return;
+      }
+
+      if (newPin !== confirmPin) {
+        $('loginError').textContent = '暗証番号が一致しません';
+        $('loginError').classList.remove('hidden');
+        return;
+      }
+
+      const saveBtn = $('savePinBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner"></span> 設定保存中...';
+      $('loginError').classList.add('hidden');
+
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'setupPin',
+            userName: firstTimeUserName,
+            newPin: newPin
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          localStorage.setItem('userName', firstTimeUserName);
+          localStorage.setItem('userPin', newPin);
+          showToast('✅ 暗証番号の設定が完了しました！');
+          $('loginModal').classList.add('hidden');
+          $('app').classList.remove('hidden');
+          $('userPoints').textContent = (result.newPt || 1000) + ' pt';
+          await initApp();
+        } else {
+          $('loginError').textContent = result.message || '設定の保存に失敗しました';
+          $('loginError').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error(err);
+        $('loginError').textContent = '通信エラーが発生しました';
+        $('loginError').classList.remove('hidden');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '暗証番号を設定して開始';
       }
     });
 
