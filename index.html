@@ -345,16 +345,45 @@
       countdownIntervals = [];
     }
 
-    function parseTime(timeStr) {
-      if (!timeStr) return null;
-      // "12:00" などの文字列を今日のDateオブジェクトに変換
-      const [hours, minutes] = timeStr.split(':').map(Number);
+    // 時刻文字列から "12:00" などの時間部分だけを美しく抽出する
+    function parseTime(timeInput) {
+      if (!timeInput) return null;
+      const str = String(timeInput).trim();
+      let hours = null, minutes = null, seconds = 0;
+
+      // 文字列の中に HH:MM または HH:MM:SS が含まれるか正規表現で直接検索 (1899-12-30T03:00:00.000Z なども含む)
+      const match = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (match) {
+        hours = parseInt(match[1], 10);
+        minutes = parseInt(match[2], 10);
+        seconds = match[3] ? parseInt(match[3], 10) : 0;
+      } else if (str.includes('T')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          hours = d.getHours();
+          minutes = d.getMinutes();
+          seconds = d.getSeconds();
+        }
+      }
+
+      if (hours === null || isNaN(hours) || isNaN(minutes)) return null;
+
+      // 当日の指定時刻のDateオブジェクトを作成
       const date = new Date();
-      date.setHours(hours, minutes, 0, 0);
+      date.setHours(hours, minutes, seconds, 0);
       return date;
     }
 
+    function extractTimeOnly(timeInput) {
+      const targetDate = parseTime(timeInput);
+      if (!targetDate) return String(timeInput || '');
+      const h = String(targetDate.getHours()).padStart(2, '0');
+      const m = String(targetDate.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
     function formatCountdown(targetDate) {
+      if (!targetDate) return '時刻未指定';
       const now = new Date();
       const diffMs = targetDate - now;
       if (diffMs <= 0) return '締切';
@@ -374,8 +403,9 @@
     function createRaceCard(raceId, raceGroup) {
       const firstEntry = raceGroup[0];
       const subject = firstEntry['種目名'] || firstEntry['種目'] || `レース ${raceId}`;
-      const startTimeStr = firstEntry['発走時刻'] || '';
-      const targetTime = parseTime(startTimeStr);
+      const rawStartTime = firstEntry['発走時刻'] || '';
+      const displayTime = extractTimeOnly(rawStartTime);
+      const targetTime = parseTime(rawStartTime);
 
       const card = document.createElement('div');
       card.className = 'bg-white/95 backdrop-blur rounded-2xl shadow-xl overflow-hidden border border-white/40 mb-4 transition-all duration-300 hover:shadow-2xl';
@@ -396,7 +426,7 @@
             <h3 class="text-base font-black text-gray-900 flex items-center gap-2">
               ${subject}
             </h3>
-            <span class="text-[11px] text-gray-400">発走時間 ${startTimeStr || '--:--'}</span>
+            <span class="text-[11px] text-gray-400">発走時間 ${displayTime || '--:--'}</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="toggle-arrow w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-transform duration-300 transform">
@@ -404,7 +434,12 @@
             </div>
           </div>
         </div>
-        <div class="competitor-wrapper hidden p-4 space-y-2.5 border-t border-gray-50">
+        <div class="competitor-wrapper hidden p-4 space-y-2 border-t border-gray-50">
+          <!-- 出走表の見出し（ヘッダー行） -->
+          <div class="flex items-center justify-between text-[11px] font-bold text-gray-400 px-2 pb-1 border-b border-gray-100">
+            <span>レーン / 選手名 / 持ちタイム</span>
+            <span>単勝オッズ / BET</span>
+          </div>
           <div class="competitor-list divide-y divide-gray-50"></div>
         </div>
       `;
@@ -436,8 +471,8 @@
       sortedGroup.forEach(competitor => {
         const lane = competitor['レーン'] || competitor.lane || '';
         const athlete = competitor['選手名'] || competitor.athlete || '';
-        const time = competitor['持ちタイム'] || competitor.time || '';
-        const odds = competitor['オッズ'] || competitor.odds || '';
+        const time = competitor['持ちタイム'] || competitor['タイム'] || competitor.time || competitor.personalBest || '--';
+        const odds = competitor['単勝オッズ'] || competitor['オッズ'] || competitor.odds || '';
 
         const row = document.createElement('div');
         row.className = 'flex items-center justify-between py-2.5 hover:bg-gray-50/50 rounded-lg px-2 transition-all';
