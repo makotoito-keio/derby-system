@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +19,7 @@
           fontFamily: { sans: ['Inter', 'sans-serif'] },
           colors: {
             brand: {
-              50:  '#eef2ff',
+              50: '#eef2ff',
               100: '#e0e7ff',
               200: '#c7d2fe',
               300: '#a5b4fc',
@@ -39,37 +40,66 @@
     .fade-in {
       animation: fadeIn 0.35s ease-out forwards;
     }
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     .slide-up {
       animation: slideUp 0.3s ease-out forwards;
     }
+
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     /* グラスモーフィズム */
     .glass {
-      background: rgba(255,255,255,0.75);
+      background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
+
     /* カスタムスクロールバー非表示 */
-    body { -webkit-overflow-scrolling: touch; }
+    body {
+      -webkit-overflow-scrolling: touch;
+    }
+
     /* ローディングスピナー */
     .spinner {
-      border: 3px solid rgba(255,255,255,0.3);
+      border: 3px solid rgba(255, 255, 255, 0.3);
       border-top-color: #fff;
       border-radius: 50%;
-      width: 18px; height: 18px;
+      width: 18px;
+      height: 18px;
       animation: spin 0.6s linear infinite;
       display: inline-block;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
+
 <body class="font-sans text-gray-800 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen">
 
   <!-- ===== ログインモーダル ===== -->
@@ -84,12 +114,14 @@
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginId">ユーザーID</label>
           <input type="text" id="loginId" name="loginId"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" placeholder="例: user01" required />
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+            placeholder="例: user01" required />
         </div>
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginPin">暗証番号 (4桁)</label>
           <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="loginPin" name="loginPin"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]" placeholder="••••" required />
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
+            placeholder="••••" required />
         </div>
         <button type="submit" id="loginBtn"
           class="w-full bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold rounded-lg py-2.5 hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
@@ -116,14 +148,19 @@
 
     <!-- タブ切り替え -->
     <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1">
-      <button id="tabBet" class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow">🎯 ベット画面</button>
-      <button id="tabRanking" class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white">🏆 順位表</button>
+      <button id="tabBet"
+        class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow">🎯
+        ベット画面</button>
+      <button id="tabRanking"
+        class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white">🏆
+        順位表</button>
     </div>
 
     <!-- ベット画面 -->
     <section id="sectionBet" class="px-4 mt-4 space-y-3">
       <div id="loadingIndicator" class="text-center py-10">
-        <div class="spinner border-brand-400 border-t-white mx-auto mb-3" style="width:30px;height:30px;border-width:4px;"></div>
+        <div class="spinner border-brand-400 border-t-white mx-auto mb-3"
+          style="width:30px;height:30px;border-width:4px;"></div>
         <p class="text-white/60 text-sm">レース情報を取得中...</p>
       </div>
       <div id="raceList" class="grid grid-cols-1 gap-3">
@@ -151,18 +188,22 @@
   </div>
 
   <!-- ===== ベット確認モーダル ===== -->
-  <div id="betModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+  <div id="betModal"
+    class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
     <div class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20">
       <h2 class="text-lg font-bold text-gray-900 mb-1">ベットする</h2>
       <p id="betTargetInfo" class="text-sm text-gray-500 mb-4"></p>
       <div class="mb-4">
         <label class="block text-sm font-semibold text-gray-700 mb-1" for="betAmount">賭けるポイント</label>
         <input type="number" id="betAmount" min="1" inputmode="numeric"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" placeholder="例: 100" required />
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+          placeholder="例: 100" required />
       </div>
       <div class="flex gap-3">
-        <button id="betCancel" class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100 transition">キャンセル</button>
-        <button id="betConfirm" class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-sm hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
+        <button id="betCancel"
+          class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100 transition">キャンセル</button>
+        <button id="betConfirm"
+          class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-sm hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
           ベットする
         </button>
       </div>
@@ -183,19 +224,46 @@
     const $ = id => document.getElementById(id);
 
     // ========================================
-    // ログイン処理
+    // ログイン処理（GAS認証）
     // ========================================
+    async function verifyLogin(id, pin) {
+      const url = GAS_URL + '?action=login&id=' + encodeURIComponent(id) + '&pin=' + encodeURIComponent(pin);
+      const res = await fetch(url);
+      return await res.json();
+    }
+
     $('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const id  = $('loginId').value.trim();
+      const id = $('loginId').value.trim();
       const pin = $('loginPin').value.trim();
       if (!id || !pin) return;
 
-      localStorage.setItem('userId', id);
-      localStorage.setItem('userPin', pin);
-      $('loginModal').classList.add('hidden');
-      $('app').classList.remove('hidden');
-      await initApp();
+      // ボタンを無効化してローディング表示
+      const loginBtn = $('loginBtn');
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="spinner"></span> 認証中...';
+      $('loginError').classList.add('hidden');
+
+      try {
+        const result = await verifyLogin(id, pin);
+        if (result.success) {
+          localStorage.setItem('userId', id);
+          localStorage.setItem('userPin', pin);
+          $('loginModal').classList.add('hidden');
+          $('app').classList.remove('hidden');
+          $('userPoints').textContent = result.points + ' pt';
+          await initApp();
+        } else {
+          $('loginError').textContent = result.message || 'IDまたはPINが間違っています';
+          $('loginError').classList.remove('hidden');
+        }
+      } catch (err) {
+        $('loginError').textContent = '通信エラーが発生しました。もう一度お試しください。';
+        $('loginError').classList.remove('hidden');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'ログイン';
+      }
     });
 
     // ログアウト
@@ -211,7 +279,7 @@
     $('tabBet').addEventListener('click', () => {
       $('sectionBet').classList.remove('hidden');
       $('sectionRanking').classList.add('hidden');
-      $('tabBet').className     = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
+      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
       $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
     });
 
@@ -219,7 +287,7 @@
       $('sectionBet').classList.add('hidden');
       $('sectionRanking').classList.remove('hidden');
       $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
-      $('tabBet').className     = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
       await loadRanking();
     });
 
@@ -231,12 +299,12 @@
       div.className = 'bg-white/90 backdrop-blur rounded-xl shadow-lg p-4 fade-in border border-white/30 hover:shadow-xl transition-shadow';
 
       // スプレッドシートのヘッダー名に合わせてプロパティを取得
-      const raceId  = race['レースID'] || race.raceId || '';
-      const lane    = race['レーン']   || race.lane   || '';
-      const athlete = race['選手名']   || race.athlete || '';
-      const time    = race['持ちタイム'] || race.time  || '';
+      const raceId = race['レースID'] || race.raceId || '';
+      const lane = race['レーン'] || race.lane || '';
+      const athlete = race['選手名'] || race.athlete || '';
+      const time = race['持ちタイム'] || race.time || '';
       const startTime = race['発走時刻'] || '';
-      const odds    = race['オッズ']   || race.odds   || '';
+      const odds = race['オッズ'] || race.odds || '';
 
       div.innerHTML = `
         <div class="flex items-center gap-3 mb-3">
@@ -269,9 +337,9 @@
       const btn = e.target.closest('.bet-btn');
       if (!btn) return;
       currentBetData = {
-        raceId:  btn.dataset.raceId,
+        raceId: btn.dataset.raceId,
         athlete: btn.dataset.athlete,
-        odds:    btn.dataset.odds,
+        odds: btn.dataset.odds,
       };
       $('betTargetInfo').textContent = `${currentBetData.athlete}（オッズ ×${currentBetData.odds}）にベットします`;
       $('betAmount').value = '';
@@ -296,7 +364,7 @@
       }
 
       const userId = localStorage.getItem('userId');
-      const pin    = localStorage.getItem('userPin');
+      const pin = localStorage.getItem('userPin');
 
       // 二重送信防止: ボタンを無効化
       const confirmBtn = $('betConfirm');
@@ -308,11 +376,11 @@
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
-            userId:     userId,
-            pin:        pin,
-            raceId:     currentBetData.raceId,
+            userId: userId,
+            pin: pin,
+            raceId: currentBetData.raceId,
             betAthlete: currentBetData.athlete,
-            betPt:      amount,
+            betPt: amount,
           }),
         });
 
@@ -388,7 +456,7 @@
     // ========================================
     async function initApp() {
       const container = $('raceList');
-      const loading   = $('loadingIndicator');
+      const loading = $('loadingIndicator');
       container.innerHTML = '';
 
       try {
@@ -411,17 +479,33 @@
     }
 
     // ========================================
-    // 自動ログイン（localStorage確認）
+    // 自動ログイン（GAS認証で確認してから表示）
     // ========================================
-    window.addEventListener('load', () => {
-      const savedId  = localStorage.getItem('userId');
+    window.addEventListener('load', async () => {
+      const savedId = localStorage.getItem('userId');
       const savedPin = localStorage.getItem('userPin');
       if (savedId && savedPin) {
-        $('loginModal').classList.add('hidden');
-        $('app').classList.remove('hidden');
-        initApp();
+        try {
+          const result = await verifyLogin(savedId, savedPin);
+          if (result.success) {
+            $('loginModal').classList.add('hidden');
+            $('app').classList.remove('hidden');
+            $('userPoints').textContent = result.points + ' pt';
+            await initApp();
+          } else {
+            // 保存された認証情報が無効 → クリアしてログイン画面を表示
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userPin');
+          }
+        } catch (err) {
+          // 通信エラー時はローカル保存情報で仮ログイン
+          $('loginModal').classList.add('hidden');
+          $('app').classList.remove('hidden');
+          await initApp();
+        }
       }
     });
   </script>
 </body>
+
 </html>
