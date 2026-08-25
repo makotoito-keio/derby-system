@@ -291,6 +291,12 @@
       return await res.json();
     }
 
+    // ログアウト (退出)
+    $('logoutBtn').addEventListener('click', () => {
+      localStorage.clear();
+      location.reload();
+    });
+
     let firstTimeUserName = '';
 
     $('loginForm').addEventListener('submit', async e => {
@@ -309,13 +315,19 @@
 
         if (result.success) {
           if (result.isFirstTime) {
-            // 初回ログイン ➔ パスワード設定画面を表示
+            // 初回ユーザー ➔ 設定フォームへ切り替え
             firstTimeUserName = result.name || name;
             $('loginForm').classList.add('hidden');
             $('firstTimeForm').classList.remove('hidden');
             $('loginSubtitle').textContent = 'INITIAL SETUP';
           } else {
-            // 2回目以降 ➔ 通常ログイン完了
+            // 設定済みユーザー ➔ PINが入力されていない場合はエラー
+            if (!pin) {
+              $('loginError').textContent = '暗証番号 (4桁) を入力してください';
+              $('loginError').classList.remove('hidden');
+              return;
+            }
+            // PIN一致でログイン完了
             localStorage.setItem('userName', result.name || name);
             localStorage.setItem('userPin', pin);
             $('loginModal').classList.add('hidden');
@@ -1008,7 +1020,7 @@
     }
 
     // ========================================
-    // 自動ログイン（GAS認証で確認してから表示）
+    // 自動ログイン（認証成功時のみアプリ表示）
     // ========================================
     window.addEventListener('load', async () => {
       const savedName = localStorage.getItem('userName') || localStorage.getItem('userId');
@@ -1016,22 +1028,20 @@
       if (savedName && savedPin) {
         try {
           const result = await verifyLogin(savedName, savedPin);
-          if (result.success) {
+          // 設定済みで、かつ認証成功の場合のみ自動ログイン
+          if (result.success && !result.isFirstTime) {
             $('loginModal').classList.add('hidden');
             $('app').classList.remove('hidden');
             $('userPoints').textContent = result.points + ' pt';
             await initApp();
           } else {
-            // 保存された認証情報が無効 → クリアしてログイン画面を表示
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userPin');
+            // パスワード未設定または認証失敗 ➔ 記憶を消去してログイン画面を表示
+            localStorage.clear();
           }
         } catch (err) {
-          // 通信エラー時はローカル保存情報で仮ログイン
-          $('loginModal').classList.add('hidden');
-          $('app').classList.remove('hidden');
-          await initApp();
+          console.error(err);
+          // エラー時も勝手にログインさせずログイン画面を表示
+          localStorage.clear();
         }
       }
     });
