@@ -336,34 +336,53 @@
       const targetTime = parseTime(startTimeStr);
 
       const card = document.createElement('div');
-      card.className = 'bg-white/95 backdrop-blur rounded-2xl shadow-xl p-5 border border-white/40 mb-4 transition-all duration-300 hover:shadow-2xl';
+      card.className = 'bg-white/95 backdrop-blur rounded-2xl shadow-xl overflow-hidden border border-white/40 mb-4 transition-all duration-300 hover:shadow-2xl';
 
-      // ヘッダー部分 (種目名、発走時間、カウントダウン)
+      // ヘッダー部分 (タップで開閉可能なアコーディオンヘッダー)
       const timerId = `timer-${raceId}`;
       card.innerHTML = `
-        <div class="border-b border-gray-100 pb-3 mb-4">
-          <div class="flex justify-between items-start">
-            <div>
-              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-800 mb-1">
+        <div class="race-header cursor-pointer p-4 select-none hover:bg-gray-50/50 transition-colors border-b border-gray-100 flex items-center justify-between">
+          <div class="flex-1 pr-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-800">
                 レース ${raceId}
               </span>
-              <h3 class="text-lg font-black text-gray-900">${subject}</h3>
-            </div>
-            <div class="text-right">
-              <span class="text-xs text-gray-400 block">発走 ${startTimeStr || '--:--'}</span>
-              <span id="${timerId}" class="text-sm font-bold text-red-500 mt-1 block">
+              <span id="${timerId}" class="text-xs font-bold text-red-500">
                 計算中...
               </span>
             </div>
+            <h3 class="text-base font-black text-gray-900 flex items-center gap-2">
+              ${subject}
+            </h3>
+            <span class="text-[11px] text-gray-400">発走時間 ${startTimeStr || '--:--'}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="toggle-arrow w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-transform duration-300 transform rotate-180">
+              ▼
+            </div>
           </div>
         </div>
-        <div class="space-y-2.5">
-          <!-- 選手リストがここに入る -->
+        <div class="competitor-wrapper p-4 space-y-2.5 border-t border-gray-50">
           <div class="competitor-list divide-y divide-gray-50"></div>
         </div>
       `;
 
+      const header = card.querySelector('.race-header');
+      const wrapper = card.querySelector('.competitor-wrapper');
+      const arrow = card.querySelector('.toggle-arrow');
       const listContainer = card.querySelector('.competitor-list');
+
+      // トグル処理
+      header.addEventListener('click', () => {
+        const isHidden = wrapper.classList.contains('hidden');
+        if (isHidden) {
+          wrapper.classList.remove('hidden');
+          arrow.classList.add('rotate-180');
+        } else {
+          wrapper.classList.add('hidden');
+          arrow.classList.remove('rotate-180');
+        }
+      });
 
       // 選手をレーン順にソートして追加
       const sortedGroup = [...raceGroup].sort((a, b) => {
@@ -411,12 +430,11 @@
             const text = formatCountdown(targetTime);
             timerEl.textContent = text;
             if (text === '締切') {
-              // 締め切りの場合はBETボタンを無効化
               card.querySelectorAll('.bet-btn').forEach(btn => {
                 btn.disabled = true;
                 btn.className = 'bg-gray-300 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-lg cursor-not-allowed';
               });
-              timerEl.className = 'text-sm font-bold text-gray-400 mt-1 block';
+              timerEl.className = 'text-xs font-bold text-gray-400';
             }
           }
         };
@@ -532,17 +550,20 @@
         const res = await fetch(GAS_URL + '?action=ranking');
         const data = await res.json();
         // ポイント降順でソート
-        data.sort((a, b) => (parseInt(b['所持ポイント']) || 0) - (parseInt(a['所持ポイント']) || 0));
+        data.sort((a, b) => (parseInt(b['所持ポイント'] || b['ポイント'] || 0) - (parseInt(a['所持ポイント'] || a['ポイント'] || 0))));
         body.innerHTML = '';
         data.forEach((user, i) => {
           const medals = ['🥇', '🥈', '🥉'];
           const rank = medals[i] || (i + 1);
+          const userName = user['カタカナ名'] || user['名前'] || user['ユーザー名'] || user['ID'] || Object.values(user)[0] || 'ゲスト';
+          const points = user['所持ポイント'] !== undefined ? user['所持ポイント'] : (user['ポイント'] !== undefined ? user['ポイント'] : 0);
+
           const tr = document.createElement('tr');
           tr.className = 'border-t border-white/5 hover:bg-white/5 transition';
           tr.innerHTML = `
             <td class="px-4 py-3 font-bold">${rank}</td>
-            <td class="px-4 py-3">${user['カタカナ名'] || user['ID'] || ''}</td>
-            <td class="px-4 py-3 text-right font-bold text-brand-300">${user['所持ポイント'] || 0} pt</td>
+            <td class="px-4 py-3 font-medium text-white">${userName}</td>
+            <td class="px-4 py-3 text-right font-bold text-brand-300">${points} pt</td>
           `;
           body.appendChild(tr);
         });
