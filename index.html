@@ -471,7 +471,7 @@
       sortedGroup.forEach(competitor => {
         const lane = competitor['レーン'] || competitor.lane || '';
         const athlete = competitor['選手名'] || competitor.athlete || '';
-        const time = competitor['持ちタイム'] || competitor['タイム'] || competitor.time || competitor.personalBest || '--';
+        const rawTime = competitor['持ちタイム'] || competitor['タイム'] || competitor.time || competitor.personalBest || '--';
         const odds = competitor['単勝オッズ'] || competitor['オッズ'] || competitor.odds || '';
 
         const row = document.createElement('div');
@@ -483,7 +483,7 @@
             </div>
             <div>
               <p class="font-bold text-gray-900 text-sm">${athlete}</p>
-              <p class="text-[11px] text-gray-400">⏱ ${time}</p>
+              <p class="text-[11px] text-gray-400">⏱ ${rawTime}</p>
             </div>
           </div>
           <div class="flex items-center gap-3">
