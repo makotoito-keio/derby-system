@@ -633,10 +633,11 @@
           return;
         }
 
-        // 新しい順にソートして表示
-        bets.reverse().forEach(b => {
+        // 新しい順にソートして表示 (コピーを作成して反転)
+        const sortedBets = [...bets].reverse();
+        sortedBets.forEach(b => {
           const card = document.createElement('div');
-          card.className = 'bg-white/95 backdrop-blur rounded-xl p-4 shadow-md border border-white/30 flex items-center justify-between';
+          card.className = 'history-card bg-white/95 backdrop-blur rounded-xl p-4 shadow-md border border-white/30 flex items-center justify-between transition-all duration-300';
           
           const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
@@ -670,6 +671,7 @@
 
       if (!confirm('このベットを取り消してポイントを戻しますか？')) return;
 
+      const targetCard = btn.closest('.history-card');
       const rowIndex = btn.dataset.rowIndex;
       const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
 
@@ -692,7 +694,19 @@
         if (result.success) {
           showToast('✅ ベットを取り消し返金しました');
           $('userPoints').textContent = result.newPt + ' pt';
-          await loadMyBets();
+          
+          // 画面全体の再ロードではなく、押されたカードだけをサッと消去する
+          if (targetCard) {
+            targetCard.style.opacity = '0';
+            targetCard.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+              targetCard.remove();
+              const container = $('historyList');
+              if (container && container.querySelectorAll('.history-card').length === 0) {
+                container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">まだベット履歴がありません</p>';
+              }
+            }, 300);
+          }
         } else {
           showToast('❌ ' + (result.message || '取り消しに失敗しました'));
           btn.disabled = false;
