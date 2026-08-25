@@ -292,40 +292,139 @@
     });
 
     // ========================================
-    // レースカード生成
+    // レースカード・階層表示の生成
     // ========================================
-    function createRaceCard(race) {
-      const div = document.createElement('div');
-      div.className = 'bg-white/90 backdrop-blur rounded-xl shadow-lg p-4 fade-in border border-white/30 hover:shadow-xl transition-shadow';
+    // カウントダウンタイマー管理用の配列
+    let countdownIntervals = [];
 
-      // スプレッドシートのヘッダー名に合わせてプロパティを取得
-      const raceId = race['レースID'] || race.raceId || '';
-      const lane = race['レーン'] || race.lane || '';
-      const athlete = race['選手名'] || race.athlete || '';
-      const time = race['持ちタイム'] || race.time || '';
-      const startTime = race['発走時刻'] || '';
-      const odds = race['オッズ'] || race.odds || '';
+    function clearCountdowns() {
+      countdownIntervals.forEach(interval => clearInterval(interval));
+      countdownIntervals = [];
+    }
 
-      div.innerHTML = `
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-extrabold text-sm shadow">${lane}</div>
-          <div class="flex-1">
-            <p class="font-bold text-gray-900 text-base">${athlete}</p>
-            <p class="text-xs text-gray-400">レース ${raceId}${startTime ? ' ・ ' + startTime : ''}</p>
+    function parseTime(timeStr) {
+      if (!timeStr) return null;
+      // "12:00" などの文字列を今日のDateオブジェクトに変換
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const date = new Date();
+      date.setHours(hours, minutes, 0, 0);
+      return date;
+    }
+
+    function formatCountdown(targetDate) {
+      const now = new Date();
+      const diffMs = targetDate - now;
+      if (diffMs <= 0) return '締切';
+
+      const diffSecs = Math.floor(diffMs / 1000);
+      const hours = Math.floor(diffSecs / 3600);
+      const mins = Math.floor((diffSecs % 3600) / 60);
+      const secs = diffSecs % 60;
+
+      if (hours > 0) {
+        return `締切まで ${hours}時間${mins}分`;
+      } else {
+        return `締切まで ${mins}分${secs}秒`;
+      }
+    }
+
+    function createRaceCard(raceId, raceGroup) {
+      const firstEntry = raceGroup[0];
+      const subject = firstEntry['種目名'] || firstEntry['種目'] || `レース ${raceId}`;
+      const startTimeStr = firstEntry['発走時刻'] || '';
+      const targetTime = parseTime(startTimeStr);
+
+      const card = document.createElement('div');
+      card.className = 'bg-white/95 backdrop-blur rounded-2xl shadow-xl p-5 border border-white/40 mb-4 transition-all duration-300 hover:shadow-2xl';
+
+      // ヘッダー部分 (種目名、発走時間、カウントダウン)
+      const timerId = `timer-${raceId}`;
+      card.innerHTML = `
+        <div class="border-b border-gray-100 pb-3 mb-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-800 mb-1">
+                レース ${raceId}
+              </span>
+              <h3 class="text-lg font-black text-gray-900">${subject}</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400 block">発走 ${startTimeStr || '--:--'}</span>
+              <span id="${timerId}" class="text-sm font-bold text-red-500 mt-1 block">
+                計算中...
+              </span>
+            </div>
           </div>
         </div>
-        <div class="flex items-center justify-between">
-          <div class="flex gap-3">
-            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-medium">⏱ ${time}</span>
-            <span class="text-xs bg-brand-50 text-brand-700 px-2 py-1 rounded-md font-bold">× ${odds}</span>
-          </div>
-          <button class="bet-btn bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:from-brand-700 hover:to-brand-600 active:scale-95 transition-all shadow shadow-brand-500/30"
-            data-race-id="${raceId}" data-athlete="${athlete}" data-odds="${odds}">
-            BET
-          </button>
+        <div class="space-y-2.5">
+          <!-- 選手リストがここに入る -->
+          <div class="competitor-list divide-y divide-gray-50"></div>
         </div>
       `;
-      return div;
+
+      const listContainer = card.querySelector('.competitor-list');
+
+      // 選手をレーン順にソートして追加
+      const sortedGroup = [...raceGroup].sort((a, b) => {
+        const laneA = parseInt(a['レーン'] || a.lane || 0, 10);
+        const laneB = parseInt(b['レーン'] || b.lane || 0, 10);
+        return laneA - laneB;
+      });
+
+      sortedGroup.forEach(competitor => {
+        const lane = competitor['レーン'] || competitor.lane || '';
+        const athlete = competitor['選手名'] || competitor.athlete || '';
+        const time = competitor['持ちタイム'] || competitor.time || '';
+        const odds = competitor['オッズ'] || competitor.odds || '';
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between py-2.5 hover:bg-gray-50/50 rounded-lg px-2 transition-all';
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
+              ${lane}
+            </div>
+            <div>
+              <p class="font-bold text-gray-900 text-sm">${athlete}</p>
+              <p class="text-[11px] text-gray-400">⏱ ${time}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">
+              × ${odds || '未設定'}
+            </span>
+            <button class="bet-btn bg-gradient-to-r from-brand-600 to-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:from-brand-700 hover:to-brand-600 active:scale-95 transition-all shadow-sm"
+              data-race-id="${raceId}" data-athlete="${athlete}" data-odds="${odds}">
+              BET
+            </button>
+          </div>
+        `;
+        listContainer.appendChild(row);
+      });
+
+      // タイマーの更新処理
+      if (targetTime) {
+        const updateTimer = () => {
+          const timerEl = card.querySelector(`#${timerId}`);
+          if (timerEl) {
+            const text = formatCountdown(targetTime);
+            timerEl.textContent = text;
+            if (text === '締切') {
+              // 締め切りの場合はBETボタンを無効化
+              card.querySelectorAll('.bet-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.className = 'bg-gray-300 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-lg cursor-not-allowed';
+              });
+              timerEl.className = 'text-sm font-bold text-gray-400 mt-1 block';
+            }
+          }
+        };
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        countdownIntervals.push(interval);
+      }
+
+      return card;
     }
 
     // ========================================
@@ -458,6 +557,7 @@
       const container = $('raceList');
       const loading = $('loadingIndicator');
       container.innerHTML = '';
+      clearCountdowns();
 
       try {
         const response = await fetch(GAS_URL);
@@ -467,8 +567,23 @@
           container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">現在レース情報はありません</p>';
           return;
         }
-        races.forEach((race, i) => {
-          const card = createRaceCard(race);
+
+        // レースIDごとにグループ化する処理
+        const groupedRaces = {};
+        races.forEach(row => {
+          const raceId = row['レースID'] || row.raceId || '不明';
+          if (!groupedRaces[raceId]) {
+            groupedRaces[raceId] = [];
+          }
+          groupedRaces[raceId].push(row);
+        });
+
+        // レースID順にソートしてカードを作成
+        const sortedRaceIds = Object.keys(groupedRaces).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+
+        sortedRaceIds.forEach((raceId, i) => {
+          const group = groupedRaces[raceId];
+          const card = createRaceCard(raceId, group);
           card.style.animationDelay = (i * 0.07) + 's';
           container.appendChild(card);
         });
