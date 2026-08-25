@@ -180,7 +180,12 @@
     </section>
 
     <!-- 順位表 -->
-    <section id="sectionRanking" class="hidden px-4 mt-4">
+    <section id="sectionRanking" class="hidden px-4 mt-4 space-y-3">
+      <!-- 自分のランク表示ピン留めカード -->
+      <div id="myRankCard" class="hidden bg-gradient-to-r from-amber-500/20 via-brand-500/20 to-amber-500/20 backdrop-blur rounded-2xl p-4 border border-amber-400/40 shadow-lg text-white">
+        <!-- JSで動的に自分の順位情報を表示 -->
+      </div>
+
       <div class="bg-white/10 backdrop-blur rounded-2xl overflow-hidden border border-white/10">
         <table class="min-w-full">
           <thead>
@@ -581,29 +586,80 @@
     // ========================================
     async function loadRanking() {
       const body = $('rankingBody');
+      const myRankCard = $('myRankCard');
       body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm">読み込み中...</td></tr>';
+      myRankCard.classList.add('hidden');
+
+      const currentUserName = (localStorage.getItem('userName') || localStorage.getItem('userId') || '').replace(/[\s\u3000]/g, '').toLowerCase();
+
       try {
-        // GAS doGet に action パラメータを付けてランキングを取得
         const res = await fetch(GAS_URL + '?action=ranking');
         const data = await res.json();
+
         // ポイント降順でソート
         data.sort((a, b) => (parseInt(b['所持ポイント'] || b['ポイント'] || 0) - (parseInt(a['所持ポイント'] || a['ポイント'] || 0))));
+        
         body.innerHTML = '';
+        let myData = null;
+        let myRankNumber = 0;
+
         data.forEach((user, i) => {
           const medals = ['🥇', '🥈', '🥉'];
-          const rank = medals[i] || (i + 1);
-          const userName = user['カタカナ名'] || user['名前'] || user['ユーザー名'] || user['ID'] || Object.values(user)[0] || 'ゲスト';
+          const rankDisplay = medals[i] || (i + 1);
+          const rawUserName = user['カタカナ名'] || user['名前'] || user['ユーザー名'] || user['ID'] || Object.values(user)[0] || 'ゲスト';
+          const cleanName = String(rawUserName).replace(/[\s\u3000]/g, '').toLowerCase();
           const points = user['所持ポイント'] !== undefined ? user['所持ポイント'] : (user['ポイント'] !== undefined ? user['ポイント'] : 0);
 
+          const isMe = currentUserName && cleanName === currentUserName;
+
+          if (isMe) {
+            myData = { name: rawUserName, points: points, rank: i + 1, rankDisplay: rankDisplay };
+            myRankNumber = i + 1;
+          }
+
           const tr = document.createElement('tr');
-          tr.className = 'border-t border-white/5 hover:bg-white/5 transition';
+          if (isMe) {
+            tr.className = 'bg-amber-500/30 border-l-4 border-amber-400 font-bold text-white transition';
+          } else {
+            tr.className = 'border-t border-white/5 hover:bg-white/5 transition';
+          }
+
           tr.innerHTML = `
-            <td class="px-4 py-3 font-bold">${rank}</td>
-            <td class="px-4 py-3 font-medium text-white">${userName}</td>
+            <td class="px-4 py-3 font-bold">${rankDisplay}</td>
+            <td class="px-4 py-3 font-medium text-white flex items-center gap-1.5">
+              ${rawUserName}
+              ${isMe ? '<span class="bg-amber-400 text-gray-900 text-[10px] font-extrabold px-1.5 py-0.5 rounded">あなた</span>' : ''}
+            </td>
             <td class="px-4 py-3 text-right font-bold text-brand-300">${points} pt</td>
           `;
           body.appendChild(tr);
         });
+
+        // 自分のランクピン留めカードを最上部に表示
+        if (myData) {
+          myRankCard.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-900 font-black text-lg shadow">
+                  ${myData.rankDisplay}
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-amber-300">⭐ あなたの現在順位</span>
+                    <span class="text-[10px] bg-amber-400 text-gray-900 font-bold px-1.5 rounded-full">第 ${myData.rank} 位</span>
+                  </div>
+                  <p class="font-extrabold text-white text-base">${myData.name}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-amber-200 block font-medium">所持ポイント</span>
+                <span class="text-lg font-black text-amber-300">${myData.points} pt</span>
+              </div>
+            </div>
+          `;
+          myRankCard.classList.remove('hidden');
+        }
+
       } catch (err) {
         body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-red-400 text-sm">取得に失敗しました</td></tr>';
       }
