@@ -147,6 +147,12 @@
       </div>
     </header>
 
+    <!-- 締切1分前・点滅警告バー -->
+    <div id="warningBanner" class="hidden sticky top-[57px] z-30 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 text-white font-extrabold text-xs py-2 px-4 text-center shadow-lg animate-pulse flex items-center justify-center gap-1.5 border-b border-amber-300/40">
+      <span class="text-sm">⚠️</span>
+      <span id="warningText">まもなく締め切り！急いでベットしよう！</span>
+    </div>
+
     <!-- タブ切り替え -->
     <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1">
       <button id="tabBet"
@@ -400,12 +406,52 @@
       }
     }
 
+    // 全レースのタイマー状況を管理するマップ
+    const activeRaceTimes = {};
+
+    function updateGlobalWarningBanner() {
+      const banner = $('warningBanner');
+      const textEl = $('warningText');
+      if (!banner || !textEl) return;
+
+      const now = new Date();
+      let urgentRace = null;
+      let minDiffSecs = 99999;
+
+      Object.values(activeRaceTimes).forEach(item => {
+        if (!item.targetTime) return;
+        const diffMs = item.targetTime - now;
+        const diffSecs = Math.floor(diffMs / 1000);
+        // 残り60秒以下で、かつまだ締め切られていない（0秒以上）レースを特定
+        if (diffSecs > 0 && diffSecs <= 60) {
+          if (diffSecs < minDiffSecs) {
+            minDiffSecs = diffSecs;
+            urgentRace = item;
+          }
+        }
+      });
+
+      if (urgentRace && minDiffSecs <= 60) {
+        textEl.textContent = `【${urgentRace.subject}】締切まであと ${minDiffSecs}秒！急いでベットしよう！`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
     function createRaceCard(raceId, raceGroup) {
       const firstEntry = raceGroup[0];
       const subject = firstEntry['種目名'] || firstEntry['種目'] || `レース ${raceId}`;
       const rawStartTime = firstEntry['発走時刻'] || '';
       const displayTime = extractTimeOnly(rawStartTime);
       const targetTime = parseTime(rawStartTime);
+
+      // 警告監視用に保持
+      activeRaceTimes[raceId] = {
+        raceId: raceId,
+        subject: subject,
+        targetTime: targetTime
+      };
 
       const card = document.createElement('div');
       card.className = 'bg-white/95 backdrop-blur rounded-2xl shadow-xl overflow-hidden border border-white/40 mb-4 transition-all duration-300 hover:shadow-2xl';
@@ -514,6 +560,8 @@
               timerEl.className = 'text-xs font-bold text-gray-400';
             }
           }
+          // グローバル警告バーの表示判定
+          updateGlobalWarningBanner();
         };
         updateTimer();
         const interval = setInterval(updateTimer, 1000);
