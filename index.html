@@ -1,628 +1,183 @@
-<!DOCTYPE html>
-<html lang="ja">
+function doGet(e) {
+  const action = e.parameter.action;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>陸上ダービー ベットシステム</title>
-  <meta name="description" content="陸上競技のレース結果を予想してポイントを賭けるダービーシステム" />
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              200: '#c7d2fe',
-              300: '#a5b4fc',
-              400: '#818cf8',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              800: '#3730a3',
-              900: '#312e81',
-            }
-          }
+  // --- A. ログイン認証 (action=login) ---
+  if (action === 'login') {
+    const rawName = String(e.parameter.name || e.parameter.id || '');
+    const rawPin = String(e.parameter.pin || '');
+    
+    // 全角・半角スペースを全て削除して比較用に小文字化
+    const cleanInputName = rawName.replace(/[\s\u3000]/g, '').toLowerCase();
+    const cleanInputPin = rawPin.trim();
+    
+    const sheet = ss.getSheetByName('Users');
+    if (!sheet) return createJsonResponse({ success: false, message: 'Usersシートが見つかりません' });
+    
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return createJsonResponse({ success: false, message: 'Usersシートにデータがありません' });
+    
+    const headers = data[0].map(h => String(h).trim());
+    
+    // 柔軟な列判定
+    let nameIdx = headers.findIndex(h => h.includes('名') || h.includes('ユーザー') || h.includes('ID'));
+    let pinIdx = headers.findIndex(h => h.toUpperCase().includes('PIN') || h.includes('暗証番号') || h.includes('パスワード'));
+    let ptIdx = headers.findIndex(h => h.includes('ポイント') || h.includes('pt') || h.includes('PT'));
+
+    // デフォルト位置のフォールバック (1列目:ID/名前, 2列目:名前/PIN...)
+    if (nameIdx === -1) nameIdx = 0;
+    if (pinIdx === -1) pinIdx = 2; // 想定: ID(0), カタカナ名(1), PIN(2)
+    
+    let userFound = false;
+    let pinMatched = false;
+    let foundUser = null;
+    
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      // 1列目と2列目の両方を名前候補としてチェック
+      const col0 = String(row[0] || '').replace(/[\s\u3000]/g, '').toLowerCase();
+      const col1 = String(row[1] || '').replace(/[\s\u3000]/g, '').toLowerCase();
+      
+      const isNameMatch = (col0 && col0 === cleanInputName) || (col1 && col1 === cleanInputName);
+      
+      if (isNameMatch) {
+        userFound = true;
+        // PINの比較 (数値変換、4桁ゼロ埋め変換などを全て試す)
+        const dbPinRaw = String(row[pinIdx] !== undefined ? row[pinIdx] : row[2] || '').trim();
+        const dbPinPadded = dbPinRaw.padStart(4, '0'); // "826" -> "0826"
+        
+        if (dbPinRaw === cleanInputPin || dbPinPadded === cleanInputPin || Number(dbPinRaw) === Number(cleanInputPin)) {
+          pinMatched = true;
+          foundUser = {
+            name: row[nameIdx] || row[1] || row[0],
+            points: ptIdx !== -1 ? row[ptIdx] : (row[3] || 0)
+          };
+          break;
         }
       }
     }
-  </script>
-  <style>
-    /* ===== カスタムアニメーション ===== */
-    .fade-in {
-      animation: fadeIn 0.35s ease-out forwards;
+    
+    if (foundUser) {
+      return createJsonResponse({ success: true, name: String(foundUser.name), points: Number(foundUser.points) });
+    } else if (userFound && !pinMatched) {
+      return createJsonResponse({ success: false, message: 'PIN（暗証番号）が一致しません' });
+    } else {
+      return createJsonResponse({ success: false, message: '「' + rawName + '」というお名前が見つかりません。スプレッドシートの表記をご確認ください' });
+    }
+  }
+
+  // --- B. ランキング取得 (action=ranking) ---
+  if (action === 'ranking') {
+    const sheet = ss.getSheetByName('Users');
+    if (!sheet) return createJsonResponse([]);
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const result = [];
+    for (let i = 1; i < data.length; i++) {
+      let obj = {};
+      headers.forEach((h, idx) => { obj[h] = data[i][idx]; });
+      result.push(obj);
+    }
+    return createJsonResponse(result);
+  }
+
+  // --- C. レース一覧取得 (デフォルト) ---
+  const racesSheet = ss.getSheetByName('Races');
+  if (!racesSheet) return createJsonResponse([]);
+  const racesData = racesSheet.getDataRange().getValues();
+  const racesHeaders = racesData[0];
+  const racesList = [];
+  for (let i = 1; i < racesData.length; i++) {
+    let obj = {};
+    racesHeaders.forEach((h, idx) => { obj[h] = racesData[i][idx]; });
+    racesList.push(obj);
+  }
+  return createJsonResponse(racesList);
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (err) {
+    return createJsonResponse({ success: false, message: '混雑しています。再度お試しください。' });
+  }
+
+  try {
+    const contents = JSON.parse(e.postData.contents);
+    const rawName = String(contents.userName || contents.userId || '');
+    const rawPin = String(contents.pin || '');
+    const raceId = String(contents.raceId || '').trim();
+    const betAthlete = String(contents.betAthlete || '').trim();
+    const betPt = Number(contents.betPt || 0);
+
+    const cleanInputName = rawName.replace(/[\s\u3000]/g, '').toLowerCase();
+    const cleanInputPin = rawPin.trim();
+
+    if (!cleanInputName || !cleanInputPin || !raceId || !betAthlete || betPt <= 0) {
+      return createJsonResponse({ success: false, message: '入力内容が不正です' });
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const usersSheet = ss.getSheetByName('Users');
+    const data = usersSheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h).trim());
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    let ptIdx = headers.findIndex(h => h.includes('ポイント') || h.includes('pt') || h.includes('PT'));
+    if (ptIdx === -1) ptIdx = 3;
 
-    .slide-up {
-      animation: slideUp 0.3s ease-out forwards;
-    }
+    let userRowIndex = -1;
+    let currentPt = 0;
+    let canonicalName = rawName;
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const col0 = String(row[0] || '').replace(/[\s\u3000]/g, '').toLowerCase();
+      const col1 = String(row[1] || '').replace(/[\s\u3000]/g, '').toLowerCase();
+      const dbPinRaw = String(row[2] || '').trim();
+      const dbPinPadded = dbPinRaw.padStart(4, '0');
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+      const isNameMatch = (col0 && col0 === cleanInputName) || (col1 && col1 === cleanInputName);
+      const isPinMatch = (dbPinRaw === cleanInputPin || dbPinPadded === cleanInputPin || Number(dbPinRaw) === Number(cleanInputPin));
 
-    /* グラスモーフィズム */
-    .glass {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    /* カスタムスクロールバー非表示 */
-    body {
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* ローディングスピナー */
-    .spinner {
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      width: 18px;
-      height: 18px;
-      animation: spin 0.6s linear infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-  </style>
-</head>
-
-<body class="font-sans text-gray-800 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen">
-
-  <!-- ===== ログインモーダル ===== -->
-  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="glass rounded-2xl shadow-2xl p-8 w-[340px] slide-up border border-white/20">
-      <div class="text-center mb-6">
-        <div class="text-4xl mb-2">🏃‍♂️</div>
-        <h1 class="text-2xl font-extrabold text-gray-900">陸上ダービー</h1>
-        <p class="text-sm text-gray-500 mt-1">ログインしてベットを始めよう</p>
-      </div>
-      <form id="loginForm" class="space-y-4">
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginName">お名前（カタカナ）</label>
-          <input type="text" id="loginName" name="loginName"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
-            placeholder="例: ヤマダ タロウ" required />
-        </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginPin">暗証番号 (4桁)</label>
-          <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="loginPin" name="loginPin"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
-            placeholder="••••" required />
-        </div>
-        <button type="submit" id="loginBtn"
-          class="w-full bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold rounded-lg py-2.5 hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
-          ログイン
-        </button>
-      </form>
-      <p id="loginError" class="text-red-500 text-xs text-center mt-3 hidden"></p>
-    </div>
-  </div>
-
-  <!-- ===== メインコンテンツ ===== -->
-  <div id="app" class="hidden max-w-md mx-auto pb-8">
-    <!-- ヘッダー -->
-    <header class="sticky top-0 z-40 glass border-b border-white/10 px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">🏃‍♂️</span>
-        <h1 class="text-lg font-extrabold text-gray-900">陸上ダービー</h1>
-      </div>
-      <div class="flex items-center gap-2">
-        <span id="userPoints" class="text-sm font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">-- pt</span>
-        <button id="logoutBtn" class="text-xs text-gray-400 hover:text-red-500 transition" title="ログアウト">🚪</button>
-      </div>
-    </header>
-
-    <!-- タブ切り替え -->
-    <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1">
-      <button id="tabBet"
-        class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow">🎯
-        ベット画面</button>
-      <button id="tabRanking"
-        class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white">🏆
-        順位表</button>
-    </div>
-
-    <!-- ベット画面 -->
-    <section id="sectionBet" class="px-4 mt-4 space-y-3">
-      <div id="loadingIndicator" class="text-center py-10">
-        <div class="spinner border-brand-400 border-t-white mx-auto mb-3"
-          style="width:30px;height:30px;border-width:4px;"></div>
-        <p class="text-white/60 text-sm">レース情報を取得中...</p>
-      </div>
-      <div id="raceList" class="grid grid-cols-1 gap-3">
-        <!-- レースカードはJavaScriptで動的に生成 -->
-      </div>
-    </section>
-
-    <!-- 順位表 -->
-    <section id="sectionRanking" class="hidden px-4 mt-4">
-      <div class="bg-white/10 backdrop-blur rounded-2xl overflow-hidden border border-white/10">
-        <table class="min-w-full">
-          <thead>
-            <tr class="bg-brand-600/80 text-white text-sm">
-              <th class="px-4 py-3 text-left font-semibold">順位</th>
-              <th class="px-4 py-3 text-left font-semibold">ユーザー</th>
-              <th class="px-4 py-3 text-right font-semibold">所持pt</th>
-            </tr>
-          </thead>
-          <tbody id="rankingBody" class="text-white/80 text-sm">
-            <!-- ランキングはJSで描画 -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-
-  <!-- ===== ベット確認モーダル ===== -->
-  <div id="betModal"
-    class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-    <div class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20">
-      <h2 class="text-lg font-bold text-gray-900 mb-1">ベットする</h2>
-      <p id="betTargetInfo" class="text-sm text-gray-500 mb-4"></p>
-      <div class="mb-4">
-        <label class="block text-sm font-semibold text-gray-700 mb-1" for="betAmount">賭けるポイント</label>
-        <input type="number" id="betAmount" min="1" inputmode="numeric"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
-          placeholder="例: 100" required />
-      </div>
-      <div class="flex gap-3">
-        <button id="betCancel"
-          class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100 transition">キャンセル</button>
-        <button id="betConfirm"
-          class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-sm hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
-          ベットする
-        </button>
-      </div>
-      <p id="betError" class="text-red-500 text-xs text-center mt-3 hidden"></p>
-    </div>
-  </div>
-
-  <!-- ===== JavaScript ===== -->
-  <script>
-    // ========================================
-    // 定数: GAS Web App の URL
-    // ========================================
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbx5pTAK5Y7M3fO_UVkIgZjO4juTMcyzu5cV-_syQLzP3oN6v_Gb631W-JHaBRgdQ7befQ/exec';
-
-    // ========================================
-    // ユーティリティ
-    // ========================================
-    const $ = id => document.getElementById(id);
-
-    // ========================================
-    // ログイン処理（GAS認証）
-    // ========================================
-    async function verifyLogin(name, pin) {
-      const url = GAS_URL + '?action=login&name=' + encodeURIComponent(name) + '&pin=' + encodeURIComponent(pin);
-      const res = await fetch(url);
-      return await res.json();
-    }
-
-    $('loginForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const name = $('loginName').value.trim();
-      const pin = $('loginPin').value.trim();
-      if (!name || !pin) return;
-
-      // ボタンを無効化してローディング表示
-      const loginBtn = $('loginBtn');
-      loginBtn.disabled = true;
-      loginBtn.innerHTML = '<span class="spinner"></span> 認証中...';
-      $('loginError').classList.add('hidden');
-
-      try {
-        const result = await verifyLogin(name, pin);
-        if (result.success) {
-          localStorage.setItem('userName', result.name || name);
-          localStorage.setItem('userPin', pin);
-          $('loginModal').classList.add('hidden');
-          $('app').classList.remove('hidden');
-          $('userPoints').textContent = result.points + ' pt';
-          await initApp();
-        } else {
-          $('loginError').textContent = result.message || '名前またはPINが間違っています';
-          $('loginError').classList.remove('hidden');
-        }
-      } catch (err) {
-        $('loginError').textContent = '通信エラーが発生しました。もう一度お試しください。';
-        $('loginError').classList.remove('hidden');
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'ログイン';
-      }
-    });
-
-    // ログアウト
-    $('logoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userPin');
-      localStorage.removeItem('userId'); // 互換性のため古いキーも削除
-      location.reload();
-    });
-
-    // ========================================
-    // タブ切り替え
-    // ========================================
-    $('tabBet').addEventListener('click', () => {
-      $('sectionBet').classList.remove('hidden');
-      $('sectionRanking').classList.add('hidden');
-      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
-      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
-    });
-
-    $('tabRanking').addEventListener('click', async () => {
-      $('sectionBet').classList.add('hidden');
-      $('sectionRanking').classList.remove('hidden');
-      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
-      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
-      await loadRanking();
-    });
-
-    // ========================================
-    // レースカード・階層表示の生成
-    // ========================================
-    // カウントダウンタイマー管理用の配列
-    let countdownIntervals = [];
-
-    function clearCountdowns() {
-      countdownIntervals.forEach(interval => clearInterval(interval));
-      countdownIntervals = [];
-    }
-
-    function parseTime(timeStr) {
-      if (!timeStr) return null;
-      // "12:00" などの文字列を今日のDateオブジェクトに変換
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      const date = new Date();
-      date.setHours(hours, minutes, 0, 0);
-      return date;
-    }
-
-    function formatCountdown(targetDate) {
-      const now = new Date();
-      const diffMs = targetDate - now;
-      if (diffMs <= 0) return '締切';
-
-      const diffSecs = Math.floor(diffMs / 1000);
-      const hours = Math.floor(diffSecs / 3600);
-      const mins = Math.floor((diffSecs % 3600) / 60);
-      const secs = diffSecs % 60;
-
-      if (hours > 0) {
-        return `締切まで ${hours}時間${mins}分`;
-      } else {
-        return `締切まで ${mins}分${secs}秒`;
+      if (isNameMatch && isPinMatch) {
+        userRowIndex = i + 1;
+        currentPt = Number(row[ptIdx] || 0);
+        canonicalName = row[1] || row[0] || rawName;
+        break;
       }
     }
 
-    function createRaceCard(raceId, raceGroup) {
-      const firstEntry = raceGroup[0];
-      const subject = firstEntry['種目名'] || firstEntry['種目'] || `レース ${raceId}`;
-      const startTimeStr = firstEntry['発走時刻'] || '';
-      const targetTime = parseTime(startTimeStr);
-
-      const card = document.createElement('div');
-      card.className = 'bg-white/95 backdrop-blur rounded-2xl shadow-xl p-5 border border-white/40 mb-4 transition-all duration-300 hover:shadow-2xl';
-
-      // ヘッダー部分 (種目名、発走時間、カウントダウン)
-      const timerId = `timer-${raceId}`;
-      card.innerHTML = `
-        <div class="border-b border-gray-100 pb-3 mb-4">
-          <div class="flex justify-between items-start">
-            <div>
-              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-800 mb-1">
-                レース ${raceId}
-              </span>
-              <h3 class="text-lg font-black text-gray-900">${subject}</h3>
-            </div>
-            <div class="text-right">
-              <span class="text-xs text-gray-400 block">発走 ${startTimeStr || '--:--'}</span>
-              <span id="${timerId}" class="text-sm font-bold text-red-500 mt-1 block">
-                計算中...
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="space-y-2.5">
-          <!-- 選手リストがここに入る -->
-          <div class="competitor-list divide-y divide-gray-50"></div>
-        </div>
-      `;
-
-      const listContainer = card.querySelector('.competitor-list');
-
-      // 選手をレーン順にソートして追加
-      const sortedGroup = [...raceGroup].sort((a, b) => {
-        const laneA = parseInt(a['レーン'] || a.lane || 0, 10);
-        const laneB = parseInt(b['レーン'] || b.lane || 0, 10);
-        return laneA - laneB;
-      });
-
-      sortedGroup.forEach(competitor => {
-        const lane = competitor['レーン'] || competitor.lane || '';
-        const athlete = competitor['選手名'] || competitor.athlete || '';
-        const time = competitor['持ちタイム'] || competitor.time || '';
-        const odds = competitor['オッズ'] || competitor.odds || '';
-
-        const row = document.createElement('div');
-        row.className = 'flex items-center justify-between py-2.5 hover:bg-gray-50/50 rounded-lg px-2 transition-all';
-        row.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
-              ${lane}
-            </div>
-            <div>
-              <p class="font-bold text-gray-900 text-sm">${athlete}</p>
-              <p class="text-[11px] text-gray-400">⏱ ${time}</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">
-              × ${odds || '未設定'}
-            </span>
-            <button class="bet-btn bg-gradient-to-r from-brand-600 to-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:from-brand-700 hover:to-brand-600 active:scale-95 transition-all shadow-sm"
-              data-race-id="${raceId}" data-athlete="${athlete}" data-odds="${odds}">
-              BET
-            </button>
-          </div>
-        `;
-        listContainer.appendChild(row);
-      });
-
-      // タイマーの更新処理
-      if (targetTime) {
-        const updateTimer = () => {
-          const timerEl = card.querySelector(`#${timerId}`);
-          if (timerEl) {
-            const text = formatCountdown(targetTime);
-            timerEl.textContent = text;
-            if (text === '締切') {
-              // 締め切りの場合はBETボタンを無効化
-              card.querySelectorAll('.bet-btn').forEach(btn => {
-                btn.disabled = true;
-                btn.className = 'bg-gray-300 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-lg cursor-not-allowed';
-              });
-              timerEl.className = 'text-sm font-bold text-gray-400 mt-1 block';
-            }
-          }
-        };
-        updateTimer();
-        const interval = setInterval(updateTimer, 1000);
-        countdownIntervals.push(interval);
-      }
-
-      return card;
+    if (userRowIndex === -1) {
+      return createJsonResponse({ success: false, message: 'ユーザー認証に失敗しました' });
     }
 
-    // ========================================
-    // ベットモーダル
-    // ========================================
-    let currentBetData = {};
-
-    document.addEventListener('click', e => {
-      const btn = e.target.closest('.bet-btn');
-      if (!btn) return;
-      currentBetData = {
-        raceId: btn.dataset.raceId,
-        athlete: btn.dataset.athlete,
-        odds: btn.dataset.odds,
-      };
-      $('betTargetInfo').textContent = `${currentBetData.athlete}（オッズ ×${currentBetData.odds}）にベットします`;
-      $('betAmount').value = '';
-      $('betError').classList.add('hidden');
-      $('betConfirm').disabled = false;
-      $('betConfirm').textContent = 'ベットする';
-      $('betModal').classList.remove('hidden');
-    });
-
-    $('betCancel').addEventListener('click', () => {
-      $('betModal').classList.add('hidden');
-    });
-
-    // ========================================
-    // ベット送信処理（POST → GAS）
-    // ========================================
-    $('betConfirm').addEventListener('click', async () => {
-      const amount = parseInt($('betAmount').value, 10);
-      if (!amount || amount <= 0) {
-        showBetError('1以上のポイントを入力してください');
-        return;
-      }
-
-      const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
-      const pin = localStorage.getItem('userPin');
-
-      // 二重送信防止: ボタンを無効化
-      const confirmBtn = $('betConfirm');
-      confirmBtn.disabled = true;
-      confirmBtn.innerHTML = '<span class="spinner"></span> 送信中...';
-
-      try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({
-            userName: userName,
-            pin: pin,
-            raceId: currentBetData.raceId,
-            betAthlete: currentBetData.athlete,
-            betPt: amount,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          // 成功 → ポイント表示を更新してモーダルを閉じる
-          $('userPoints').textContent = result.newPt + ' pt';
-          $('betModal').classList.add('hidden');
-          showToast('✅ ベット完了！');
-        } else {
-          showBetError(result.message || 'ベットに失敗しました');
-        }
-      } catch (err) {
-        console.error(err);
-        showBetError('通信エラーが発生しました。もう一度お試しください。');
-      } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'ベットする';
-      }
-    });
-
-    function showBetError(msg) {
-      const el = $('betError');
-      el.textContent = msg;
-      el.classList.remove('hidden');
+    if (currentPt < betPt) {
+      return createJsonResponse({ success: false, message: '所持ポイントが不足しています' });
     }
 
-    // ========================================
-    // トースト通知
-    // ========================================
-    function showToast(message) {
-      const toast = document.createElement('div');
-      toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-green-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg slide-up';
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; }, 2000);
-      setTimeout(() => toast.remove(), 2500);
+    // 1. ポイント減算
+    const newPt = currentPt - betPt;
+    usersSheet.getRange(userRowIndex, ptIdx + 1).setValue(newPt);
+
+    // 2. Betsシート記録
+    let betsSheet = ss.getSheetByName('Bets');
+    if (!betsSheet) {
+      betsSheet = ss.insertSheet('Bets');
+      betsSheet.appendRow(['日時', 'カタカナ名', 'レースID', '賭けた選手', '賭けたポイント']);
     }
+    betsSheet.appendRow([new Date(), canonicalName, raceId, betAthlete, betPt]);
 
-    // ========================================
-    // ランキング読み込み（Usersシートを流用）
-    // ========================================
-    async function loadRanking() {
-      const body = $('rankingBody');
-      body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm">読み込み中...</td></tr>';
-      try {
-        // GAS doGet に action パラメータを付けてランキングを取得
-        const res = await fetch(GAS_URL + '?action=ranking');
-        const data = await res.json();
-        // ポイント降順でソート
-        data.sort((a, b) => (parseInt(b['所持ポイント']) || 0) - (parseInt(a['所持ポイント']) || 0));
-        body.innerHTML = '';
-        data.forEach((user, i) => {
-          const medals = ['🥇', '🥈', '🥉'];
-          const rank = medals[i] || (i + 1);
-          const tr = document.createElement('tr');
-          tr.className = 'border-t border-white/5 hover:bg-white/5 transition';
-          tr.innerHTML = `
-            <td class="px-4 py-3 font-bold">${rank}</td>
-            <td class="px-4 py-3">${user['カタカナ名'] || user['ID'] || ''}</td>
-            <td class="px-4 py-3 text-right font-bold text-brand-300">${user['所持ポイント'] || 0} pt</td>
-          `;
-          body.appendChild(tr);
-        });
-      } catch (err) {
-        body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-red-400 text-sm">取得に失敗しました</td></tr>';
-      }
-    }
+    return createJsonResponse({ success: true, newPt: newPt });
 
-    // ========================================
-    // アプリ初期化: レース情報取得 (GET)
-    // ========================================
-    async function initApp() {
-      const container = $('raceList');
-      const loading = $('loadingIndicator');
-      container.innerHTML = '';
-      clearCountdowns();
+  } catch (err) {
+    return createJsonResponse({ success: false, message: 'エラーが発生しました: ' + err.toString() });
+  } finally {
+    lock.releaseLock();
+  }
+}
 
-      try {
-        const response = await fetch(GAS_URL);
-        const races = await response.json();
-        loading.classList.add('hidden');
-        if (!races || races.length === 0) {
-          container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">現在レース情報はありません</p>';
-          return;
-        }
-
-        // レースIDごとにグループ化する処理
-        const groupedRaces = {};
-        races.forEach(row => {
-          const raceId = row['レースID'] || row.raceId || '不明';
-          if (!groupedRaces[raceId]) {
-            groupedRaces[raceId] = [];
-          }
-          groupedRaces[raceId].push(row);
-        });
-
-        // レースID順にソートしてカードを作成
-        const sortedRaceIds = Object.keys(groupedRaces).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-
-        sortedRaceIds.forEach((raceId, i) => {
-          const group = groupedRaces[raceId];
-          const card = createRaceCard(raceId, group);
-          card.style.animationDelay = (i * 0.07) + 's';
-          container.appendChild(card);
-        });
-      } catch (err) {
-        console.error('レース情報の取得に失敗:', err);
-        loading.innerHTML = '<p class="text-red-400 text-sm">レース情報の取得に失敗しました。<br>ページを再読み込みしてください。</p>';
-      }
-    }
-
-    // ========================================
-    // 自動ログイン（GAS認証で確認してから表示）
-    // ========================================
-    window.addEventListener('load', async () => {
-      const savedName = localStorage.getItem('userName') || localStorage.getItem('userId');
-      const savedPin = localStorage.getItem('userPin');
-      if (savedName && savedPin) {
-        try {
-          const result = await verifyLogin(savedName, savedPin);
-          if (result.success) {
-            $('loginModal').classList.add('hidden');
-            $('app').classList.remove('hidden');
-            $('userPoints').textContent = result.points + ' pt';
-            await initApp();
-          } else {
-            // 保存された認証情報が無効 → クリアしてログイン画面を表示
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userPin');
-          }
-        } catch (err) {
-          // 通信エラー時はローカル保存情報で仮ログイン
-          $('loginModal').classList.add('hidden');
-          $('app').classList.remove('hidden');
-          await initApp();
-        }
-      }
-    });
-  </script>
-</body>
-
-</html>
+function createJsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
