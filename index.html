@@ -142,6 +142,7 @@
       </div>
       <div class="flex items-center gap-2">
         <span id="userPoints" class="text-sm font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">-- pt</span>
+        <button id="refreshBtn" class="text-xs bg-white/20 hover:bg-white/30 text-white p-1.5 rounded-lg transition" title="手動更新">🔄</button>
         <button id="logoutBtn" class="text-xs text-gray-400 hover:text-red-500 transition" title="ログアウト">🚪</button>
       </div>
     </header>
@@ -149,10 +150,13 @@
     <!-- タブ切り替え -->
     <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1">
       <button id="tabBet"
-        class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow">🎯
-        ベット画面</button>
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow">🎯
+        ベット</button>
+      <button id="tabHistory"
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white">📜
+        履歴</button>
       <button id="tabRanking"
-        class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white">🏆
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white">🏆
         順位表</button>
     </div>
 
@@ -165,6 +169,13 @@
       </div>
       <div id="raceList" class="grid grid-cols-1 gap-3">
         <!-- レースカードはJavaScriptで動的に生成 -->
+      </div>
+    </section>
+
+    <!-- ベット履歴画面 -->
+    <section id="sectionHistory" class="hidden px-4 mt-4 space-y-3">
+      <div id="historyList" class="space-y-3">
+        <!-- 履歴カードはJavaScriptで読み込み -->
       </div>
     </section>
 
@@ -274,21 +285,47 @@
       location.reload();
     });
 
+    // 手動更新ボタン
+    $('refreshBtn').addEventListener('click', async () => {
+      showToast('🔄 情報を更新中...');
+      await initApp();
+      if (!$('sectionHistory').classList.contains('hidden')) {
+        await loadMyBets();
+      }
+      if (!$('sectionRanking').classList.contains('hidden')) {
+        await loadRanking();
+      }
+    });
+
     // ========================================
     // タブ切り替え
     // ========================================
-    $('tabBet').addEventListener('click', () => {
-      $('sectionBet').classList.remove('hidden');
+    function resetTabStyles() {
+      $('sectionBet').classList.add('hidden');
+      $('sectionHistory').classList.add('hidden');
       $('sectionRanking').classList.add('hidden');
-      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
-      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabHistory').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white';
+    }
+
+    $('tabBet').addEventListener('click', () => {
+      resetTabStyles();
+      $('sectionBet').classList.remove('hidden');
+      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow';
+    });
+
+    $('tabHistory').addEventListener('click', async () => {
+      resetTabStyles();
+      $('sectionHistory').classList.remove('hidden');
+      $('tabHistory').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow';
+      await loadMyBets();
     });
 
     $('tabRanking').addEventListener('click', async () => {
-      $('sectionBet').classList.add('hidden');
+      resetTabStyles();
       $('sectionRanking').classList.remove('hidden');
-      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
-      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow';
       await loadRanking();
     });
 
@@ -357,12 +394,12 @@
             <span class="text-[11px] text-gray-400">発走時間 ${startTimeStr || '--:--'}</span>
           </div>
           <div class="flex items-center gap-2">
-            <div class="toggle-arrow w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-transform duration-300 transform rotate-180">
+            <div class="toggle-arrow w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-transform duration-300 transform">
               ▼
             </div>
           </div>
         </div>
-        <div class="competitor-wrapper p-4 space-y-2.5 border-t border-gray-50">
+        <div class="competitor-wrapper hidden p-4 space-y-2.5 border-t border-gray-50">
           <div class="competitor-list divide-y divide-gray-50"></div>
         </div>
       `;
@@ -571,6 +608,103 @@
         body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-red-400 text-sm">取得に失敗しました</td></tr>';
       }
     }
+    // ========================================
+    // ベット履歴読み込み＆削除（キャンセル）処理
+    // ========================================
+    async function loadMyBets() {
+      const container = $('historyList');
+      container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">読み込み中...</p>';
+      const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
+
+      if (!userName) {
+        container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">ログイン情報が見つかりません</p>';
+        return;
+      }
+
+      try {
+        const url = GAS_URL + '?action=myBets&name=' + encodeURIComponent(userName);
+        const res = await fetch(url);
+        const bets = await res.json();
+
+        container.innerHTML = '';
+
+        if (!bets || bets.length === 0) {
+          container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">まだベット履歴がありません</p>';
+          return;
+        }
+
+        // 新しい順にソートして表示
+        bets.reverse().forEach(b => {
+          const card = document.createElement('div');
+          card.className = 'bg-white/95 backdrop-blur rounded-xl p-4 shadow-md border border-white/30 flex items-center justify-between';
+          
+          const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800">レース ${b.raceId}</span>
+                <span class="text-xs text-gray-400">${dateStr}</span>
+              </div>
+              <p class="font-bold text-gray-900 text-sm">${b.athlete}</p>
+              <p class="text-xs font-bold text-brand-600 mt-0.5">${b.betPt} pt 賭け中</p>
+            </div>
+            <button class="cancel-bet-btn bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
+              data-row-index="${b.rowIndex}">
+              取り消す
+            </button>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p class="text-center text-red-400 text-sm py-8">履歴の読み込みに失敗しました</p>';
+      }
+    }
+
+    // ベットの取り消し・返金処理
+    document.addEventListener('click', async e => {
+      const btn = e.target.closest('.cancel-bet-btn');
+      if (!btn) return;
+
+      if (!confirm('このベットを取り消してポイントを戻しますか？')) return;
+
+      const rowIndex = btn.dataset.rowIndex;
+      const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
+
+      btn.disabled = true;
+      btn.textContent = '処理中...';
+
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'cancelBet',
+            userName: userName,
+            rowIndex: rowIndex
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('✅ ベットを取り消し返金しました');
+          $('userPoints').textContent = result.newPt + ' pt';
+          await loadMyBets();
+        } else {
+          showToast('❌ ' + (result.message || '取り消しに失敗しました'));
+          btn.disabled = false;
+          btn.textContent = '取り消す';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('❌ 通信エラーが発生しました');
+        btn.disabled = false;
+        btn.textContent = '取り消す';
+      }
+    });
 
     // ========================================
     // アプリ初期化: レース情報取得 (GET)
