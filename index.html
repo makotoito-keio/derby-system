@@ -1316,6 +1316,7 @@
           const response = await fetch(GAS_URL);
           races = await response.json();
           setCache('races', races);
+          loading.classList.add('hidden'); // ★データ取得後にローディングを消す
         } catch (err) {
           console.error('レース情報の取得に失敗:', err);
           loading.innerHTML = '<p class="text-red-400 text-sm">レース情報の取得に失敗しました。<br>ページを再読み込みしてください。</p>';
