@@ -1,24 +1,33 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>陸上ダービー ベットシステム</title>
-  <meta name="description" content="陸上競技のレース結果を予想してポイントを賭けるダービーシステム" />
-  <!-- Tailwind CSS CDN -->
+  <title>ALL KEIO DERBY</title>
+  <meta name="description" content="ALL KEIO DERBY Betting System" />
+  <!-- Tailwind CSS (本番運用用スタイルシート) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+    integrity="sha512-wnea99cKBU3JHveKreWEeG0sRZjJPu9ZXFHup/iJGZXS39UXRBnsvqPUPRLYQ5lSaQpjiE93ijhvjGfU3+boGQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap"
+    rel="stylesheet" />
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          },
           colors: {
             brand: {
-              50:  '#eef2ff',
+              50: '#eef2ff',
               100: '#e0e7ff',
               200: '#c7d2fe',
               300: '#a5b4fc',
@@ -35,67 +44,130 @@
     }
   </script>
   <style>
+    .font-logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
     /* ===== カスタムアニメーション ===== */
     .fade-in {
       animation: fadeIn 0.35s ease-out forwards;
     }
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     .slide-up {
       animation: slideUp 0.3s ease-out forwards;
     }
+
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     /* グラスモーフィズム */
     .glass {
-      background: rgba(255,255,255,0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
+
     /* カスタムスクロールバー非表示 */
-    body { -webkit-overflow-scrolling: touch; }
+    body {
+      -webkit-overflow-scrolling: touch;
+    }
+
     /* ローディングスピナー */
     .spinner {
-      border: 3px solid rgba(255,255,255,0.3);
+      border: 3px solid rgba(255, 255, 255, 0.3);
       border-top-color: #fff;
       border-radius: 50%;
-      width: 18px; height: 18px;
+      width: 18px;
+      height: 18px;
       animation: spin 0.6s linear infinite;
       display: inline-block;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
-<body class="font-sans text-gray-800 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen">
+
+<body class="font-sans text-gray-800 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 min-h-screen">
 
   <!-- ===== ログインモーダル ===== -->
-  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="glass rounded-2xl shadow-2xl p-8 w-[340px] slide-up border border-white/20">
+  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
+    <div class="glass rounded-2xl shadow-2xl p-8 w-[340px] slide-up border border-white/30">
       <div class="text-center mb-6">
-        <div class="text-4xl mb-2">🏃‍♂️</div>
-        <h1 class="text-2xl font-extrabold text-gray-900">陸上ダービー</h1>
-        <p class="text-sm text-gray-500 mt-1">ログインしてベットを始めよう</p>
+        <h1 class="text-2xl font-logo text-gray-900 tracking-wider">ALL KEIO DERBY</h1>
+        <p id="loginSubtitle" class="text-xs text-gray-500 uppercase tracking-widest mt-1">Betting System</p>
       </div>
+
+      <!-- 通常ログインフォーム -->
       <form id="loginForm" class="space-y-4">
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginId">ユーザーID</label>
-          <input type="text" id="loginId" name="loginId"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" placeholder="例: user01" required />
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginName">お名前（カタカナ）</label>
+          <input type="text" id="loginName" name="loginName"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+            placeholder="例: ヤマダ タロウ" required />
         </div>
-        <div>
+        <div id="pinContainer">
           <label class="block text-sm font-semibold text-gray-700 mb-1" for="loginPin">暗証番号 (4桁)</label>
           <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="loginPin" name="loginPin"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]" placeholder="••••" required />
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
+            placeholder="••••" />
+          <p class="text-[11px] text-gray-400 mt-1">※初めての方は名前を入力してログインを押してください</p>
         </div>
         <button type="submit" id="loginBtn"
           class="w-full bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold rounded-lg py-2.5 hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
           ログイン
         </button>
       </form>
+
+      <!-- 初回パスワード設定フォーム (初期は非表示) -->
+      <form id="firstTimeForm" class="space-y-4 hidden">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-xs font-bold text-center">
+          🎉 初回ログインです！<br>ご希望の暗証番号 (4桁) を設定してください。
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="newPin">新しい暗証番号 (4桁)</label>
+          <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="newPin"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
+            placeholder="••••" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="confirmPin">確認のため再入力</label>
+          <input type="password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" id="confirmPin"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition tracking-[0.3em]"
+            placeholder="••••" required />
+        </div>
+        <button type="submit" id="savePinBtn"
+          class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-gray-950 font-black rounded-lg py-2.5 hover:from-amber-600 hover:to-amber-700 active:scale-[0.98] transition-all shadow-lg shadow-amber-500/30">
+          暗証番号を設定して開始
+        </button>
+      </form>
+
       <p id="loginError" class="text-red-500 text-xs text-center mt-3 hidden"></p>
     </div>
   </div>
@@ -103,27 +175,51 @@
   <!-- ===== メインコンテンツ ===== -->
   <div id="app" class="hidden max-w-md mx-auto pb-8">
     <!-- ヘッダー -->
-    <header class="sticky top-0 z-40 glass border-b border-white/10 px-4 py-3 flex items-center justify-between">
+    <header
+      class="sticky top-0 z-40 glass border-b border-white/20 px-4 py-3 flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-2">
-        <span class="text-2xl">🏃‍♂️</span>
-        <h1 class="text-lg font-extrabold text-gray-900">陸上ダービー</h1>
+        <h1 class="text-lg font-logo text-gray-900 tracking-wider">ALL KEIO DERBY</h1>
       </div>
       <div class="flex items-center gap-2">
-        <span id="userPoints" class="text-sm font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">-- pt</span>
-        <button id="logoutBtn" class="text-xs text-gray-400 hover:text-red-500 transition" title="ログアウト">🚪</button>
+        <span id="userPoints"
+          class="text-sm font-extrabold text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">--
+          pt</span>
+        <button id="refreshBtn"
+          class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2.5 py-1.5 rounded-lg transition"
+          title="手動更新">更新</button>
+        <button id="logoutBtn"
+          class="text-xs bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 font-bold px-2 py-1.5 rounded-lg transition"
+          title="ログアウト">退出</button>
       </div>
     </header>
 
+    <!-- 締切1分前・点滅警告バー -->
+    <div id="warningBanner"
+      class="hidden sticky top-[57px] z-30 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 text-white font-black text-xs py-2 px-4 text-center shadow-lg animate-pulse border-b border-amber-300/40">
+      <span id="warningText">まもなく締め切り！急いでベットしよう！</span>
+    </div>
+
     <!-- タブ切り替え -->
-    <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1">
-      <button id="tabBet" class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow">🎯 ベット画面</button>
-      <button id="tabRanking" class="flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white">🏆 順位表</button>
+    <div class="flex mx-4 mt-4 bg-white/10 rounded-xl p-1 gap-1 border border-white/10">
+      <button id="tabBet"
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-extrabold transition-all bg-white text-brand-700 shadow">
+        BET
+      </button>
+      <button id="tabHistory"
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-extrabold transition-all text-white/70 hover:text-white">
+        HISTORY
+      </button>
+      <button id="tabRanking"
+        class="flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-extrabold transition-all text-white/70 hover:text-white">
+        RANKING
+      </button>
     </div>
 
     <!-- ベット画面 -->
     <section id="sectionBet" class="px-4 mt-4 space-y-3">
       <div id="loadingIndicator" class="text-center py-10">
-        <div class="spinner border-brand-400 border-t-white mx-auto mb-3" style="width:30px;height:30px;border-width:4px;"></div>
+        <div class="spinner border-brand-400 border-t-white mx-auto mb-3"
+          style="width:30px;height:30px;border-width:4px;"></div>
         <p class="text-white/60 text-sm">レース情報を取得中...</p>
       </div>
       <div id="raceList" class="grid grid-cols-1 gap-3">
@@ -131,8 +227,21 @@
       </div>
     </section>
 
+    <!-- ベット履歴画面 -->
+    <section id="sectionHistory" class="hidden px-4 mt-4 space-y-3">
+      <div id="historyList" class="space-y-3">
+        <!-- 履歴カードはJavaScriptで読み込み -->
+      </div>
+    </section>
+
     <!-- 順位表 -->
-    <section id="sectionRanking" class="hidden px-4 mt-4">
+    <section id="sectionRanking" class="hidden px-4 mt-4 space-y-3">
+      <!-- 自分のランク表示ピン留めカード -->
+      <div id="myRankCard"
+        class="hidden bg-gradient-to-r from-amber-500/20 via-brand-500/20 to-amber-500/20 backdrop-blur rounded-2xl p-4 border border-amber-400/40 shadow-lg text-white">
+        <!-- JSで動的に自分の順位情報を表示 -->
+      </div>
+
       <div class="bg-white/10 backdrop-blur rounded-2xl overflow-hidden border border-white/10">
         <table class="min-w-full">
           <thead>
@@ -150,19 +259,69 @@
     </section>
   </div>
 
-  <!-- ===== ベット確認モーダル ===== -->
-  <div id="betModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-    <div class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20">
-      <h2 class="text-lg font-bold text-gray-900 mb-1">ベットする</h2>
-      <p id="betTargetInfo" class="text-sm text-gray-500 mb-4"></p>
+  <!-- ===== ベット確認モーダル（3人予想） ===== -->
+  <div id="betModal"
+    class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+    <div
+      class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20 max-h-[90vh] overflow-y-auto">
+      <h2 id="betModalTitle" class="text-lg font-bold text-gray-900 mb-1">ベットする</h2>
+      <p id="betTargetInfo" class="text-sm text-gray-500 mb-3"></p>
+
+      <!-- 出走表（参照用） -->
+      <div id="betRefTable" class="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-200">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">出走表</p>
+        <div id="betRefList" class="space-y-1 text-xs"></div>
+      </div>
+
+      <!-- 3人予想入力 -->
+      <div class="space-y-3 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-amber-600 mb-1">🥇 1着予想</label>
+          <select id="pick1"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition bg-white">
+            <option value="">-- 選手を選択 --</option>
+          </select>
+          <p id="pick1Info" class="text-xs text-gray-400 mt-0.5 h-4"></p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 mb-1">🥈 2着予想</label>
+          <select id="pick2"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition bg-white">
+            <option value="">-- 選手を選択 --</option>
+          </select>
+          <p id="pick2Info" class="text-xs text-gray-400 mt-0.5 h-4"></p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-orange-700 mb-1">🥉 3着予想</label>
+          <select id="pick3"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition bg-white">
+            <option value="">-- 選手を選択 --</option>
+          </select>
+          <p id="pick3Info" class="text-xs text-gray-400 mt-0.5 h-4"></p>
+        </div>
+      </div>
+
+      <!-- 合成オッズ表示 -->
+      <div id="oddsPreview" class="bg-brand-50 rounded-xl p-3 mb-4 border border-brand-200 hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-brand-600">合成オッズ（全的中時）</span>
+          <span id="combinedOdds" class="text-lg font-black text-brand-700">--</span>
+        </div>
+        <div id="maxPayout" class="text-right text-xs text-brand-500 font-bold mt-1"></div>
+      </div>
+
+      <!-- ポイント入力 -->
       <div class="mb-4">
         <label class="block text-sm font-semibold text-gray-700 mb-1" for="betAmount">賭けるポイント</label>
         <input type="number" id="betAmount" min="1" inputmode="numeric"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" placeholder="例: 100" required />
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+          placeholder="例: 100" required />
       </div>
       <div class="flex gap-3">
-        <button id="betCancel" class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100 transition">キャンセル</button>
-        <button id="betConfirm" class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-sm hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
+        <button id="betCancel"
+          class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100 transition">キャンセル</button>
+        <button id="betConfirm"
+          class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-sm hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30">
           ベットする
         </button>
       </div>
@@ -183,101 +342,599 @@
     const $ = id => document.getElementById(id);
 
     // ========================================
-    // ログイン処理
+    // クライアント側（スマホ側）キャッシュ管理
     // ========================================
+    const clientCache = {
+      races: { data: null, expiresAt: 0 },
+      ranking: { data: null, expiresAt: 0 },
+      myBets: { data: null, expiresAt: 0 }
+    };
+    const CACHE_TTL = 30 * 1000; // 30秒保持
+
+    function getCache(key) {
+      if (clientCache[key].data && Date.now() < clientCache[key].expiresAt) {
+        return clientCache[key].data;
+      }
+      return null;
+    }
+
+    function setCache(key, data) {
+      clientCache[key].data = data;
+      clientCache[key].expiresAt = Date.now() + CACHE_TTL;
+    }
+
+    function clearCache(key) {
+      clientCache[key].data = null;
+      clientCache[key].expiresAt = 0;
+    }
+    
+    function clearAllCache() {
+      clearCache('races');
+      clearCache('ranking');
+      clearCache('myBets');
+    }
+
+    // レース出走情報の保持（モーダルから参照）
+    const raceCompetitors = {};
+
+    // ========================================
+    // ログイン処理（GAS認証）
+    // ========================================
+    async function verifyLogin(name, pin) {
+      const url = GAS_URL + '?action=login&name=' + encodeURIComponent(name) + '&pin=' + encodeURIComponent(pin);
+      const res = await fetch(url);
+      return await res.json();
+    }
+
+    // 管理側の払い戻しは別の操作で実行されるため、画面更新時に残高も再取得する。
+    async function refreshUserPoints() {
+      const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
+      const pin = localStorage.getItem('userPin');
+      if (!userName || !pin) return;
+
+      const result = await verifyLogin(userName, pin);
+      if (result.success && !result.isFirstTime) {
+        $('userPoints').textContent = Number(result.points || 0).toLocaleString() + ' pt';
+      }
+    }
+
+
+    let firstTimeUserName = '';
+
     $('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const id  = $('loginId').value.trim();
+      const name = $('loginName').value.trim();
       const pin = $('loginPin').value.trim();
-      if (!id || !pin) return;
+      if (!name) return;
 
-      localStorage.setItem('userId', id);
-      localStorage.setItem('userPin', pin);
-      $('loginModal').classList.add('hidden');
-      $('app').classList.remove('hidden');
-      await initApp();
+      const loginBtn = $('loginBtn');
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="spinner"></span> 認証中...';
+      $('loginError').classList.add('hidden');
+
+      try {
+        const result = await verifyLogin(name, pin);
+
+        if (result.success) {
+          if (result.isFirstTime) {
+            // 初回ユーザー ➔ 設定フォームへ切り替え
+            firstTimeUserName = result.name || name;
+            $('loginForm').classList.add('hidden');
+            $('firstTimeForm').classList.remove('hidden');
+            $('loginSubtitle').textContent = 'INITIAL SETUP';
+          } else {
+            // 設定済みユーザー ➔ PINが入力されていない場合はエラー
+            if (!pin) {
+              $('loginError').textContent = '暗証番号 (4桁) を入力してください';
+              $('loginError').classList.remove('hidden');
+              return;
+            }
+            // PIN一致でログイン完了（localStorageには平文PINを保存）
+            localStorage.setItem('userName', result.name || name);
+            localStorage.setItem('userPin', pin);
+            $('loginModal').classList.add('hidden');
+            $('app').classList.remove('hidden');
+            $('userPoints').textContent = result.points + ' pt';
+            await initApp();
+          }
+        } else {
+          $('loginError').textContent = result.message || '名前または暗証番号が間違っています';
+          $('loginError').classList.remove('hidden');
+        }
+      } catch (err) {
+        $('loginError').textContent = '通信エラーが発生しました。もう一度お試しください。';
+        $('loginError').classList.remove('hidden');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'ログイン';
+      }
+    });
+
+    // 初回パスワード設定の保存処理
+    $('firstTimeForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const newPin = $('newPin').value.trim();
+      const confirmPin = $('confirmPin').value.trim();
+
+      if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
+        $('loginError').textContent = '4桁の数字を入力してください';
+        $('loginError').classList.remove('hidden');
+        return;
+      }
+
+      if (newPin !== confirmPin) {
+        $('loginError').textContent = '暗証番号が一致しません';
+        $('loginError').classList.remove('hidden');
+        return;
+      }
+
+      const saveBtn = $('savePinBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner"></span> 設定保存中...';
+      $('loginError').classList.add('hidden');
+
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'setupPin',
+            userName: firstTimeUserName,
+            newPin: newPin
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          localStorage.setItem('userName', firstTimeUserName);
+          localStorage.setItem('userPin', newPin); // 平文PINを保存
+          showToast('✅ 暗証番号の設定が完了しました！');
+          $('loginModal').classList.add('hidden');
+          $('app').classList.remove('hidden');
+          clearAllCache();
+          $('userPoints').textContent = (result.newPt || 1000) + ' pt';
+          await initApp(true);
+        } else {
+          $('loginError').textContent = result.message || '設定の保存に失敗しました';
+          $('loginError').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error(err);
+        $('loginError').textContent = '通信エラーが発生しました';
+        $('loginError').classList.remove('hidden');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '暗証番号を設定して開始';
+      }
     });
 
     // ログアウト
     $('logoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
       localStorage.removeItem('userPin');
+      localStorage.removeItem('userId'); // 互換性のため古いキーも削除
       location.reload();
+    });
+
+    // 手動更新ボタン
+    $('refreshBtn').addEventListener('click', async () => {
+      showToast('🔄 情報を更新中...');
+      await Promise.all([initApp(true), refreshUserPoints()]);
+      if (!$('sectionHistory').classList.contains('hidden')) {
+        await loadMyBets(true);
+      }
+      if (!$('sectionRanking').classList.contains('hidden')) {
+        await loadRanking(true);
+      }
     });
 
     // ========================================
     // タブ切り替え
     // ========================================
-    $('tabBet').addEventListener('click', () => {
-      $('sectionBet').classList.remove('hidden');
+    function resetTabStyles() {
+      $('sectionBet').classList.add('hidden');
+      $('sectionHistory').classList.add('hidden');
       $('sectionRanking').classList.add('hidden');
-      $('tabBet').className     = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
-      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabHistory').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all text-white/60 hover:text-white';
+    }
+
+    $('tabBet').addEventListener('click', () => {
+      resetTabStyles();
+      $('sectionBet').classList.remove('hidden');
+      $('tabBet').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow';
+    });
+
+    $('tabHistory').addEventListener('click', async () => {
+      resetTabStyles();
+      $('sectionHistory').classList.remove('hidden');
+      $('tabHistory').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow';
+      await loadMyBets();
     });
 
     $('tabRanking').addEventListener('click', async () => {
-      $('sectionBet').classList.add('hidden');
+      resetTabStyles();
       $('sectionRanking').classList.remove('hidden');
-      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all bg-white text-brand-700 shadow';
-      $('tabBet').className     = 'flex-1 py-2 text-center rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white';
+      $('tabRanking').className = 'flex-1 py-2 text-center rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-brand-700 shadow';
       await loadRanking();
     });
 
     // ========================================
-    // レースカード生成
+    // レースカード・階層表示の生成
     // ========================================
-    function createRaceCard(race) {
-      const div = document.createElement('div');
-      div.className = 'bg-white/90 backdrop-blur rounded-xl shadow-lg p-4 fade-in border border-white/30 hover:shadow-xl transition-shadow';
+    // カウントダウンタイマー管理用の配列
+    let countdownIntervals = [];
 
-      // スプレッドシートのヘッダー名に合わせてプロパティを取得
-      const raceId  = race['レースID'] || race.raceId || '';
-      const lane    = race['レーン']   || race.lane   || '';
-      const athlete = race['選手名']   || race.athlete || '';
-      const time    = race['持ちタイム'] || race.time  || '';
-      const startTime = race['発走時刻'] || '';
-      const odds    = race['オッズ']   || race.odds   || '';
+    function clearCountdowns() {
+      countdownIntervals.forEach(interval => clearInterval(interval));
+      countdownIntervals = [];
+    }
 
-      div.innerHTML = `
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-extrabold text-sm shadow">${lane}</div>
-          <div class="flex-1">
-            <p class="font-bold text-gray-900 text-base">${athlete}</p>
-            <p class="text-xs text-gray-400">レース ${raceId}${startTime ? ' ・ ' + startTime : ''}</p>
+    // 時刻文字列から "12:00" などの時間部分だけを美しく抽出する
+    function parseTime(timeInput) {
+      if (!timeInput) return null;
+      const str = String(timeInput).trim();
+      let hours = null, minutes = null, seconds = 0;
+
+      // 文字列の中に HH:MM または HH:MM:SS が含まれるか正規表現で直接検索 (1899-12-30T03:00:00.000Z なども含む)
+      const match = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (match) {
+        hours = parseInt(match[1], 10);
+        minutes = parseInt(match[2], 10);
+        seconds = match[3] ? parseInt(match[3], 10) : 0;
+      } else if (str.includes('T')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          hours = d.getHours();
+          minutes = d.getMinutes();
+          seconds = d.getSeconds();
+        }
+      }
+
+      if (hours === null || isNaN(hours) || isNaN(minutes)) return null;
+
+      // 当日の指定時刻のDateオブジェクトを作成
+      const date = new Date();
+      date.setHours(hours, minutes, seconds, 0);
+      return date;
+    }
+
+    function extractTimeOnly(timeInput) {
+      const targetDate = parseTime(timeInput);
+      if (!targetDate) return String(timeInput || '');
+      const h = String(targetDate.getHours()).padStart(2, '0');
+      const m = String(targetDate.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
+    function formatCountdown(targetDate) {
+      if (!targetDate) return '時刻未指定';
+      const now = new Date();
+      const diffMs = targetDate - now;
+      if (diffMs <= 0) return '締切';
+
+      const diffSecs = Math.floor(diffMs / 1000);
+      const hours = Math.floor(diffSecs / 3600);
+      const mins = Math.floor((diffSecs % 3600) / 60);
+      const secs = diffSecs % 60;
+
+      if (hours > 0) {
+        return `締切まで ${hours}時間${mins}分`;
+      } else {
+        return `締切まで ${mins}分${secs}秒`;
+      }
+    }
+
+    // 全レースのタイマー状況を管理するマップ
+    const activeRaceTimes = {};
+
+    function updateGlobalWarningBanner() {
+      const banner = $('warningBanner');
+      const textEl = $('warningText');
+      if (!banner || !textEl) return;
+
+      const now = new Date();
+      let urgentRace = null;
+      let minDiffSecs = 99999;
+
+      Object.values(activeRaceTimes).forEach(item => {
+        if (!item.targetTime) return;
+        const diffMs = item.targetTime - now;
+        const diffSecs = Math.floor(diffMs / 1000);
+        // 残り60秒以下で、かつまだ締め切られていない（0秒以上）レースを特定
+        if (diffSecs > 0 && diffSecs <= 60) {
+          if (diffSecs < minDiffSecs) {
+            minDiffSecs = diffSecs;
+            urgentRace = item;
+          }
+        }
+      });
+
+      if (urgentRace && minDiffSecs <= 60) {
+        textEl.textContent = `【${urgentRace.subject}】締切まであと ${minDiffSecs}秒！急いでベットしよう！`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function createRaceCard(raceId, raceGroup) {
+      const firstEntry = raceGroup[0];
+      const subject = firstEntry['種目名'] || firstEntry['種目'] || `レース ${raceId}`;
+      const rawStartTime = firstEntry['発走時刻'] || '';
+      const displayTime = extractTimeOnly(rawStartTime);
+      const targetTime = parseTime(rawStartTime);
+
+      // 警告監視用に保持
+      activeRaceTimes[raceId] = {
+        raceId: raceId,
+        subject: subject,
+        targetTime: targetTime
+      };
+
+      const card = document.createElement('div');
+      card.className = 'bg-white/95 backdrop-blur rounded-2xl shadow-xl overflow-hidden border border-white/40 mb-4 transition-all duration-300 hover:shadow-2xl';
+
+      // ヘッダー部分 (タップで開閉可能なアコーディオンヘッダー)
+      const timerId = `timer-${raceId}`;
+      card.innerHTML = `
+        <div class="race-header cursor-pointer p-4 select-none hover:bg-gray-50/50 transition-colors border-b border-gray-100 flex items-center justify-between">
+          <div class="flex-1 pr-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-800">
+                レース ${raceId}
+              </span>
+              <span id="${timerId}" class="text-xs font-bold text-red-500">
+                計算中...
+              </span>
+            </div>
+            <h3 class="text-base font-black text-gray-900 flex items-center gap-2">
+              ${subject}
+            </h3>
+            <span class="text-[11px] text-gray-400">発走時間 ${displayTime || '--:--'}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="toggle-arrow w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-transform duration-300 transform">
+              ▼
+            </div>
           </div>
         </div>
-        <div class="flex items-center justify-between">
-          <div class="flex gap-3">
-            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-medium">⏱ ${time}</span>
-            <span class="text-xs bg-brand-50 text-brand-700 px-2 py-1 rounded-md font-bold">× ${odds}</span>
+        <div class="competitor-wrapper hidden p-4 space-y-2 border-t border-gray-50">
+          <!-- 出走表の見出し（ヘッダー行） -->
+          <div class="flex items-center justify-between text-[11px] font-bold text-gray-400 px-2 pb-1 border-b border-gray-100">
+            <span>レーン / 選手名 / 持ちタイム</span>
+            <span>オッズ</span>
           </div>
-          <button class="bet-btn bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:from-brand-700 hover:to-brand-600 active:scale-95 transition-all shadow shadow-brand-500/30"
-            data-race-id="${raceId}" data-athlete="${athlete}" data-odds="${odds}">
-            BET
+          <div class="competitor-list divide-y divide-gray-50"></div>
+          <!-- レース単位のBETボタン -->
+          <button class="race-bet-btn w-full mt-3 bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-bold px-4 py-3 rounded-xl hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30"
+            data-race-id="${raceId}">
+            🏇 このレースにBET
           </button>
         </div>
       `;
-      return div;
+
+      const header = card.querySelector('.race-header');
+      const wrapper = card.querySelector('.competitor-wrapper');
+      const arrow = card.querySelector('.toggle-arrow');
+      const listContainer = card.querySelector('.competitor-list');
+
+      // トグル処理
+      header.addEventListener('click', () => {
+        const isHidden = wrapper.classList.contains('hidden');
+        if (isHidden) {
+          wrapper.classList.remove('hidden');
+          arrow.classList.add('rotate-180');
+        } else {
+          wrapper.classList.add('hidden');
+          arrow.classList.remove('rotate-180');
+        }
+      });
+
+      // 選手をレーン順にソートして追加
+      const sortedGroup = [...raceGroup].sort((a, b) => {
+        const laneA = parseInt(a['レーン'] || a.lane || 0, 10);
+        const laneB = parseInt(b['レーン'] || b.lane || 0, 10);
+        return laneA - laneB;
+      });
+
+      // レース出走情報をグローバルに保持（モーダルで参照）
+      raceCompetitors[raceId] = sortedGroup.map(c => ({
+        lane: c['レーン'] || c.lane || '',
+        athlete: c['選手名'] || c.athlete || '',
+        odds: c['単勝オッズ'] || c['オッズ'] || c.odds || '',
+        time: c['持ちタイム'] || c['タイム'] || c.time || c.personalBest || '--'
+      }));
+
+      sortedGroup.forEach(competitor => {
+        const lane = competitor['レーン'] || competitor.lane || '';
+        const athlete = competitor['選手名'] || competitor.athlete || '';
+        const rawTime = competitor['持ちタイム'] || competitor['タイム'] || competitor.time || competitor.personalBest || '--';
+        const odds = competitor['単勝オッズ'] || competitor['オッズ'] || competitor.odds || '';
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between py-2.5 hover:bg-gray-50/50 rounded-lg px-2 transition-all';
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
+              ${lane}
+            </div>
+            <div>
+              <p class="font-bold text-gray-900 text-sm">${athlete}</p>
+              <p class="text-[11px] text-gray-400">⏱ ${rawTime}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">
+              × ${odds || '未設定'}
+            </span>
+          </div>
+        `;
+        listContainer.appendChild(row);
+      });
+
+      // タイマーの更新処理
+      if (targetTime) {
+        const updateTimer = () => {
+          const timerEl = card.querySelector(`#${timerId}`);
+          if (timerEl) {
+            const text = formatCountdown(targetTime);
+            timerEl.textContent = text;
+            if (text === '締切') {
+              // ★フールプルーフ1: 締切後はすべてのベットボタンを無効化
+              card.querySelectorAll('.bet-btn, .race-bet-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = '締切済み';
+                btn.className = btn.classList.contains('race-bet-btn')
+                  ? 'race-bet-btn w-full mt-3 bg-gray-300 text-gray-500 text-sm font-bold px-4 py-3 rounded-xl cursor-not-allowed'
+                  : 'bg-gray-300 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-lg cursor-not-allowed';
+              });
+              timerEl.className = 'text-xs font-bold text-gray-400';
+            }
+          }
+          // グローバル警告バーの表示判定
+          updateGlobalWarningBanner();
+        };
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        countdownIntervals.push(interval);
+      }
+
+      return card;
     }
 
     // ========================================
-    // ベットモーダル
+    // ベットモーダル（3人予想）
     // ========================================
     let currentBetData = {};
+    // ★ 現在アクティブなベットがあるレースIDを追跡するセット（二重ベット警告用）
+    const activeRaceBetIds = new Set();
 
+    // モーダルのセレクト更新
+    function populateBetModal(raceId) {
+      const competitors = raceCompetitors[raceId];
+      if (!competitors) return;
+
+      // 出走表参照リスト
+      const refList = $('betRefList');
+      refList.innerHTML = competitors.map(c =>
+        `<div class="flex items-center justify-between py-1 px-1">
+          <span><span class="inline-block w-5 h-5 rounded-full bg-gray-800 text-white text-[10px] font-bold text-center leading-5 mr-1.5">${c.lane}</span>${c.athlete}</span>
+          <span class="font-bold text-brand-600">×${c.odds || '?'}</span>
+        </div>`
+      ).join('');
+
+      // セレクトボックスにオプション追加
+      ['pick1', 'pick2', 'pick3'].forEach(id => {
+        const sel = $(id);
+        sel.innerHTML = '<option value="">-- 選手を選択 --</option>';
+        competitors.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.athlete;  // ★選手名をvalueとして送信（レーン番号ではなく）
+          opt.textContent = `レーン ${c.lane} - ${c.athlete}（×${c.odds || '?'}）`;
+          sel.appendChild(opt);
+        });
+        $(id + 'Info').textContent = '';
+      });
+
+      updateOddsPreview();
+    }
+
+    // オッズプレビュー計算
+    function updateOddsPreview() {
+      const raceId = currentBetData.raceId;
+      const competitors = raceCompetitors[raceId];
+      if (!competitors) return;
+
+      const picks = ['pick1', 'pick2', 'pick3'].map(id => $(id).value);
+      const selected = picks.filter(p => p !== '');
+
+      // 各ピックの情報を表示（valueは選手名）
+      picks.forEach((athleteName, i) => {
+        const infoEl = $(`pick${i + 1}Info`);
+        if (athleteName) {
+          const comp = competitors.find(c => c.athlete === athleteName);
+          if (comp) {
+            infoEl.textContent = `レーン${comp.lane}  オッズ ×${comp.odds}`;
+            infoEl.className = 'text-xs text-brand-600 font-bold mt-0.5 h-4';
+          }
+        } else {
+          infoEl.textContent = '';
+          infoEl.className = 'text-xs text-gray-400 mt-0.5 h-4';
+        }
+      });
+
+      // 重複チェック
+      const uniquePicks = new Set(selected);
+      if (uniquePicks.size < selected.length) {
+        showBetError('同じ選手を2回以上選ぶことはできません');
+      } else {
+        $('betError').classList.add('hidden');
+      }
+
+      // 合成オッズ計算（valueは選手名なので選手名で検索）
+      if (selected.length === 3 && uniquePicks.size === 3) {
+        let combined = 1;
+        selected.forEach(athleteName => {
+          const comp = competitors.find(c => c.athlete === athleteName);
+          if (comp && comp.odds) combined *= parseFloat(comp.odds);
+        });
+        $('combinedOdds').textContent = `×${combined.toFixed(1)}`;
+        $('oddsPreview').classList.remove('hidden');
+
+        const betAmt = parseInt($('betAmount').value, 10) || 0;
+        if (betAmt > 0) {
+          $('maxPayout').textContent = `最大払い戻し: ${Math.floor(betAmt * combined).toLocaleString()} pt`;
+
+          // ★フールプルーフ2: 所持ポイント超過のリアルタイム警告
+          const currentPtText = $('userPoints') ? $('userPoints').textContent.replace(/[^0-9]/g, '') : '0';
+          const currentPt = parseInt(currentPtText, 10) || 0;
+          if (betAmt > currentPt) {
+            showBetError(`所持ポイント（${currentPt} pt）を超えています！`);
+          } else {
+            $('betError').classList.add('hidden');
+          }
+        } else {
+          $('maxPayout').textContent = '';
+        }
+      } else {
+        $('oddsPreview').classList.add('hidden');
+      }
+    }
+
+    // セレクト変更時にオッズ再計算
+    ['pick1', 'pick2', 'pick3'].forEach(id => {
+      $(id).addEventListener('change', updateOddsPreview);
+    });
+
+    // ポイント入力時にも最大払い戻しを更新
+    $('betAmount').addEventListener('input', updateOddsPreview);
+
+    // BETボタンクリック → モーダル表示
     document.addEventListener('click', e => {
-      const btn = e.target.closest('.bet-btn');
+      const btn = e.target.closest('.race-bet-btn');
       if (!btn) return;
-      currentBetData = {
-        raceId:  btn.dataset.raceId,
-        athlete: btn.dataset.athlete,
-        odds:    btn.dataset.odds,
-      };
-      $('betTargetInfo').textContent = `${currentBetData.athlete}（オッズ ×${currentBetData.odds}）にベットします`;
+      if (btn.disabled) return; // 締切済みボタンは無視
+      const raceId = btn.dataset.raceId;
+
+      // ★フールプルーフ4: 同じレースへの二重ベット警告
+      const existingActiveBet = document.querySelector(`#historyList .history-card`);
+      // historyListから現在表示中のアクティブなベットのraceIdを確認
+      // ※ activeRaceBetIds はベット成功時に更新するセット
+      if (activeRaceBetIds.has(String(raceId))) {
+        if (!confirm(`レース ${raceId} にはすでにベット中です。\n追加でさらにベットしますか？`)) return;
+      }
+
+      currentBetData = { raceId };
+      $('betModalTitle').textContent = `レース ${raceId} にベット`;
+      $('betTargetInfo').textContent = '1着・2着・3着を予想してください';
       $('betAmount').value = '';
       $('betError').classList.add('hidden');
       $('betConfirm').disabled = false;
       $('betConfirm').textContent = 'ベットする';
+      populateBetModal(raceId);
       $('betModal').classList.remove('hidden');
     });
 
@@ -286,7 +943,7 @@
     });
 
     // ========================================
-    // ベット送信処理（POST → GAS）
+    // ベット送信処理（POST → GAS）3人予想版
     // ========================================
     $('betConfirm').addEventListener('click', async () => {
       const amount = parseInt($('betAmount').value, 10);
@@ -295,8 +952,23 @@
         return;
       }
 
-      const userId = localStorage.getItem('userId');
-      const pin    = localStorage.getItem('userPin');
+      const pick1 = $('pick1').value;
+      const pick2 = $('pick2').value;
+      const pick3 = $('pick3').value;
+
+      if (!pick1 || !pick2 || !pick3) {
+        showBetError('1着・2着・3着の3人を全て選択してください');
+        return;
+      }
+
+      const picks = [pick1, pick2, pick3];
+      if (new Set(picks).size < 3) {
+        showBetError('同じ選手を2回以上選ぶことはできません');
+        return;
+      }
+
+      const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
+      const pin = localStorage.getItem('userPin');
 
       // 二重送信防止: ボタンを無効化
       const confirmBtn = $('betConfirm');
@@ -308,21 +980,27 @@
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
-            userId:     userId,
-            pin:        pin,
-            raceId:     currentBetData.raceId,
-            betAthlete: currentBetData.athlete,
-            betPt:      amount,
+            userName: userName,
+            pin: pin,
+            raceId: currentBetData.raceId,
+            pick1: pick1,
+            pick2: pick2,
+            pick3: pick3,
+            betPt: amount,
           }),
         });
 
         const result = await response.json();
 
         if (result.success) {
-          // 成功 → ポイント表示を更新してモーダルを閉じる
           $('userPoints').textContent = result.newPt + ' pt';
+          // アクティブベットセットに追加（二重ベット警告用）
+          activeRaceBetIds.add(String(currentBetData.raceId));
           $('betModal').classList.add('hidden');
           showToast('✅ ベット完了！');
+          
+          // キャッシュを破棄して最新データを取得できるようにする
+          clearAllCache();
         } else {
           showBetError(result.message || 'ベットに失敗しました');
         }
@@ -342,11 +1020,29 @@
     }
 
     // ========================================
+    // pick値（レーン番号 or 選手名）を選手名に解決するヘルパー
+    // 古いベットデータにはレーン番号が入っていることがあるため、両方に対応する
+    // ========================================
+    function resolveAthleteName(raceId, pick) {
+      if (!pick) return pick;
+      const pickStr = String(pick).trim();
+      // 数字のみの場合はレーン番号と判断し、raceCompetitorsから選手名を引く
+      if (/^\d+$/.test(pickStr)) {
+        const competitors = raceCompetitors[raceId];
+        if (competitors) {
+          const comp = competitors.find(c => String(c.lane) === pickStr);
+          if (comp) return comp.athlete;
+        }
+      }
+      return pickStr; // 既に選手名の場合はそのまま返す
+    }
+
+    // ========================================
     // トースト通知
     // ========================================
     function showToast(message) {
       const toast = document.createElement('div');
-      toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-green-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg slide-up';
+      toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl shadow-2xl border border-white/20 slide-up';
       toast.textContent = message;
       document.body.appendChild(toast);
       setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; }, 2000);
@@ -356,72 +1052,358 @@
     // ========================================
     // ランキング読み込み（Usersシートを流用）
     // ========================================
-    async function loadRanking() {
+    async function loadRanking(forceRefresh = false) {
       const body = $('rankingBody');
-      body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm">読み込み中...</td></tr>';
-      try {
-        // GAS doGet に action パラメータを付けてランキングを取得
-        const res = await fetch(GAS_URL + '?action=ranking');
-        const data = await res.json();
-        // ポイント降順でソート
-        data.sort((a, b) => (parseInt(b['所持ポイント']) || 0) - (parseInt(a['所持ポイント']) || 0));
-        body.innerHTML = '';
+      const myRankCard = $('myRankCard');
+
+      let data = forceRefresh ? null : getCache('ranking');
+
+      if (!data) {
+        body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm font-medium">読み込み中...</td></tr>';
+        myRankCard.classList.add('hidden');
+        try {
+          const res = await fetch(GAS_URL + '?action=ranking');
+          data = await res.json();
+          setCache('ranking', data);
+        } catch (err) {
+          body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-red-400 text-sm">取得に失敗しました</td></tr>';
+          return;
+        }
+      }
+
+      const currentUserName = (localStorage.getItem('userName') || localStorage.getItem('userId') || '').replace(/[\s\u3000]/g, '').toLowerCase();
+
+      // ポイント降順でソート
+      data.sort((a, b) => (parseInt(b['所持ポイント'] || b['ポイント'] || 0) - (parseInt(a['所持ポイント'] || a['ポイント'] || 0))));
+
+      body.innerHTML = '';
+      let myData = null;
+        let myRankNumber = 0;
+
         data.forEach((user, i) => {
-          const medals = ['🥇', '🥈', '🥉'];
-          const rank = medals[i] || (i + 1);
+          const rankDisplay = i + 1;
+          const rawUserName = user['カタカナ名'] || user['名前'] || user['ユーザー名'] || user['ID'] || Object.values(user)[0] || 'ゲスト';
+          const cleanName = String(rawUserName).replace(/[\s\u3000]/g, '').toLowerCase();
+          const points = user['所持ポイント'] !== undefined ? user['所持ポイント'] : (user['ポイント'] !== undefined ? user['ポイント'] : 0);
+
+          const isMe = currentUserName && cleanName === currentUserName;
+
+          if (isMe) {
+            myData = { name: rawUserName, points: points, rank: i + 1, rankDisplay: rankDisplay };
+            myRankNumber = i + 1;
+          }
+
           const tr = document.createElement('tr');
-          tr.className = 'border-t border-white/5 hover:bg-white/5 transition';
+          if (isMe) {
+            tr.className = 'bg-amber-500/30 border-l-4 border-amber-400 font-bold text-white transition';
+          } else {
+            tr.className = 'border-t border-white/5 hover:bg-white/5 transition';
+          }
+
           tr.innerHTML = `
-            <td class="px-4 py-3 font-bold">${rank}</td>
-            <td class="px-4 py-3">${user['カタカナ名'] || user['ID'] || ''}</td>
-            <td class="px-4 py-3 text-right font-bold text-brand-300">${user['所持ポイント'] || 0} pt</td>
+            <td class="px-4 py-3 font-extrabold">${rankDisplay}</td>
+            <td class="px-4 py-3 font-medium text-white flex items-center gap-1.5">
+              ${rawUserName}
+              ${isMe ? '<span class="bg-amber-400 text-gray-900 text-[10px] font-black px-1.5 py-0.5 rounded">YOU</span>' : ''}
+            </td>
+            <td class="px-4 py-3 text-right font-extrabold text-brand-300">${points} pt</td>
           `;
           body.appendChild(tr);
         });
-      } catch (err) {
-        body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-red-400 text-sm">取得に失敗しました</td></tr>';
-      }
+
+        // 自分のランクピン留めカードを最上部に表示
+        if (myData) {
+          myRankCard.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-950 font-logo text-base shadow">
+                  #${myData.rankDisplay}
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] uppercase font-extrabold tracking-wider text-amber-300">YOUR RANKING</span>
+                    <span class="text-[10px] bg-amber-400 text-gray-900 font-black px-1.5 rounded-md">RANK ${myData.rank}</span>
+                  </div>
+                  <p class="font-extrabold text-white text-base">${myData.name}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-amber-200 uppercase tracking-wider block font-bold">TOTAL POINTS</span>
+                <span class="text-lg font-black text-amber-300 font-logo">${myData.points} PT</span>
+              </div>
+            </div>
+          `;
+          myRankCard.classList.remove('hidden');
+        }
     }
+    // ========================================
+    // ベット履歴読み込み＆削除（キャンセル）処理
+    // ========================================
+    async function loadMyBets(forceRefresh = false) {
+      const container = $('historyList');
+      const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
+
+      if (!userName) {
+        container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">ログイン情報が見つかりません</p>';
+        return;
+      }
+
+      // 払い戻し後に履歴を開いた場合も、ヘッダー残高を最新化する。
+      try {
+        await refreshUserPoints();
+      } catch (err) {
+        console.error('ポイント情報の更新に失敗:', err);
+      }
+
+      let bets = forceRefresh ? null : getCache('myBets');
+
+      if (!bets) {
+        container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">読み込み中...</p>';
+        try {
+          const url = GAS_URL + '?action=myBets&name=' + encodeURIComponent(userName);
+          const res = await fetch(url);
+          bets = await res.json();
+          setCache('myBets', bets);
+        } catch (err) {
+          container.innerHTML = '<p class="text-center text-red-400 text-sm py-8">取得に失敗しました</p>';
+          return;
+        }
+      }
+
+      container.innerHTML = '';
+
+      // ステータスで仕分け
+        const activeBets = bets.filter(b => { const s = b.status || ''; return !s.includes('的中') && !s.includes('確定') && !s.includes('キャンセル'); });
+        const resultedBets = bets.filter(b => { const s = b.status || ''; return s === '的中' || s === '不的中'; });
+
+        // ---- セクション1: 進行中のベット ----
+        const activeSection = document.createElement('div');
+        activeSection.innerHTML = `<p class="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">🏇 進行中のベット</p>`;
+
+        activeRaceBetIds.clear(); // 状態を初期化
+
+        if (activeBets.length === 0) {
+          activeSection.innerHTML += '<p class="text-center text-white/40 text-sm py-4 bg-white/5 rounded-xl">進行中のベットはありません</p>';
+        } else {
+          [...activeBets].reverse().forEach(b => {
+            activeRaceBetIds.add(String(b.raceId)); // 進行中のベットのレースIDを追跡
+            
+            const card = document.createElement('div');
+            card.className = 'history-card bg-white/95 backdrop-blur rounded-xl p-4 shadow-md border border-white/30 flex items-center justify-between transition-all duration-300 mb-2';
+            card.dataset.raceId = b.raceId; // キャンセル時に参照するため保持
+            const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            // pick値がレーン番号の場合も選手名に変換して表示
+            const p1 = resolveAthleteName(b.raceId, b.pick1);
+            const p2 = resolveAthleteName(b.raceId, b.pick2);
+            const p3 = resolveAthleteName(b.raceId, b.pick3);
+            const pickDisplay = (p1 && p2 && p3) ? `🥇${p1} 🥈${p2} 🥉${p3}` : (b.athlete || '---');
+            card.innerHTML = `
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800">レース ${b.raceId}</span>
+                  <span class="text-xs text-gray-400">${dateStr}</span>
+                </div>
+                <p class="font-bold text-gray-900 text-sm">${pickDisplay}</p>
+                <p class="text-xs font-bold text-brand-600 mt-0.5">${b.betPt} pt 賭け中</p>
+              </div>
+              <button class="cancel-bet-btn bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
+                data-row-index="${b.rowIndex}">
+                取り消す
+              </button>
+            `;
+            activeSection.appendChild(card);
+          });
+        }
+        container.appendChild(activeSection);
+
+        // ---- セクション2: 結果済みのレース ----
+        const resultSection = document.createElement('div');
+        resultSection.className = 'mt-5';
+        resultSection.innerHTML = `<p class="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">🏁 レース結果</p>`;
+
+        if (resultedBets.length === 0) {
+          resultSection.innerHTML += '<p class="text-center text-white/40 text-sm py-4 bg-white/5 rounded-xl">確定済みのレースはまだありません</p>';
+        } else {
+          [...resultedBets].reverse().forEach(b => {
+            const isHit = b.status === '的中';
+            const card = document.createElement('div');
+            card.className = `rounded-xl p-4 shadow-md border mb-2 transition-all ${isHit ? 'bg-gradient-to-r from-emerald-500/20 to-green-400/10 border-emerald-400/40' : 'bg-white/10 border-white/10'}`;
+
+            const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            // pick値がレーン番号の場合も選手名に変換して表示
+            const p1 = resolveAthleteName(b.raceId, b.pick1);
+            const p2 = resolveAthleteName(b.raceId, b.pick2);
+            const p3 = resolveAthleteName(b.raceId, b.pick3);
+            const pickDisplay = (p1 && p2 && p3) ? `🥇${p1} 🥈${p2} 🥉${p3}` : (b.athlete || '---');
+            const hitCountDisplay = b.hitCount ? b.hitCount : '0/3';
+            const payoutDisplay = Number(b.payoutPt) > 0 ? `+${Number(b.payoutPt).toLocaleString()} pt` : '0 pt';
+
+            card.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isHit ? 'bg-emerald-100 text-emerald-800' : 'bg-white/20 text-white/60'}">レース ${b.raceId}</span>
+                    <span class="text-xs text-white/40">${dateStr}</span>
+                  </div>
+                  <p class="font-bold text-sm ${isHit ? 'text-white' : 'text-white/60'}">${pickDisplay}</p>
+                  <p class="text-xs text-white/50 mt-0.5">${b.betPt} pt 賭け  ／  ${hitCountDisplay} 的中</p>
+                </div>
+                <div class="text-right ml-3">
+                  <p class="text-[11px] font-bold ${isHit ? 'text-emerald-300' : 'text-white/30'} mb-0.5">${isHit ? '🎯 的中！' : '💨 不的中'}</p>
+                  <p class="text-lg font-black ${isHit ? 'text-emerald-300' : 'text-white/30'}">${payoutDisplay}</p>
+                </div>
+              </div>
+            `;
+            resultSection.appendChild(card);
+          });
+        }
+        container.appendChild(resultSection);
+    }
+
+    // ベットの取り消し・返金処理
+    document.addEventListener('click', async e => {
+      const btn = e.target.closest('.cancel-bet-btn');
+      if (!btn) return;
+
+      if (!confirm('このベットを取り消してポイントを戻しますか？')) return;
+
+      const targetCard = btn.closest('.history-card');
+      const rowIndex = btn.dataset.rowIndex;
+      const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
+
+      btn.disabled = true;
+      btn.textContent = '処理中...';
+
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'cancelBet',
+            userName: userName,
+            pin: localStorage.getItem('userPin'),
+            rowIndex: rowIndex
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('✅ ベットを取り消し返金しました');
+          $('userPoints').textContent = result.newPt + ' pt';
+          clearAllCache(); // キャッシュを破棄
+
+          if (targetCard && targetCard.dataset.raceId) {
+            activeRaceBetIds.delete(String(targetCard.dataset.raceId)); // セットから削除して再度ベット可能にする
+          }
+
+          // 画面全体の再ロードではなく、押されたカードだけをサッと消去する
+          if (targetCard) {
+            targetCard.style.opacity = '0';
+            targetCard.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+              targetCard.remove();
+              const container = $('historyList');
+              if (container && container.querySelectorAll('.history-card').length === 0) {
+                container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">まだベット履歴がありません</p>';
+              }
+            }, 300);
+          }
+        } else {
+          showToast('❌ ' + (result.message || '取り消しに失敗しました'));
+          btn.disabled = false;
+          btn.textContent = '取り消す';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('❌ 通信エラーが発生しました');
+        btn.disabled = false;
+        btn.textContent = '取り消す';
+      }
+    });
 
     // ========================================
     // アプリ初期化: レース情報取得 (GET)
     // ========================================
-    async function initApp() {
+    async function initApp(forceRefresh = false) {
       const container = $('raceList');
-      const loading   = $('loadingIndicator');
-      container.innerHTML = '';
+      const loading = $('loadingIndicator');
 
-      try {
-        const response = await fetch(GAS_URL);
-        const races = await response.json();
-        loading.classList.add('hidden');
-        if (!races || races.length === 0) {
-          container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">現在レース情報はありません</p>';
+      let races = forceRefresh ? null : getCache('races');
+
+      if (!races) {
+        container.innerHTML = '';
+        loading.classList.remove('hidden');
+        clearCountdowns();
+        try {
+          const response = await fetch(GAS_URL);
+          races = await response.json();
+          setCache('races', races);
+          loading.classList.add('hidden'); // ★データ取得後にローディングを消す
+        } catch (err) {
+          console.error('レース情報の取得に失敗:', err);
+          loading.innerHTML = '<p class="text-red-400 text-sm">レース情報の取得に失敗しました。<br>ページを再読み込みしてください。</p>';
           return;
         }
-        races.forEach((race, i) => {
-          const card = createRaceCard(race);
+      } else {
+        container.innerHTML = '';
+        clearCountdowns();
+        loading.classList.add('hidden');
+      }
+
+      if (!races || races.length === 0) {
+        container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">現在レース情報はありません</p>';
+        return;
+      }
+
+        // レースIDごとにグループ化する処理
+        const groupedRaces = {};
+        races.forEach(row => {
+          const raceId = row['レースID'] || row.raceId || '不明';
+          if (!groupedRaces[raceId]) {
+            groupedRaces[raceId] = [];
+          }
+          groupedRaces[raceId].push(row);
+        });
+
+        // レースID順にソートしてカードを作成
+        const sortedRaceIds = Object.keys(groupedRaces).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+
+        sortedRaceIds.forEach((raceId, i) => {
+          const group = groupedRaces[raceId];
+          const card = createRaceCard(raceId, group);
           card.style.animationDelay = (i * 0.07) + 's';
           container.appendChild(card);
         });
-      } catch (err) {
-        console.error('レース情報の取得に失敗:', err);
-        loading.innerHTML = '<p class="text-red-400 text-sm">レース情報の取得に失敗しました。<br>ページを再読み込みしてください。</p>';
-      }
     }
 
     // ========================================
-    // 自動ログイン（localStorage確認）
+    // 自動ログイン（認証成功時のみアプリ表示）
     // ========================================
-    window.addEventListener('load', () => {
-      const savedId  = localStorage.getItem('userId');
+    window.addEventListener('load', async () => {
+      const savedName = localStorage.getItem('userName') || localStorage.getItem('userId');
       const savedPin = localStorage.getItem('userPin');
-      if (savedId && savedPin) {
-        $('loginModal').classList.add('hidden');
-        $('app').classList.remove('hidden');
-        initApp();
+      if (savedName && savedPin) {
+        try {
+          const result = await verifyLogin(savedName, savedPin);
+          // 設定済みで、かつ認証成功の場合のみ自動ログイン
+          if (result.success && !result.isFirstTime) {
+            $('loginModal').classList.add('hidden');
+            $('app').classList.remove('hidden');
+            $('userPoints').textContent = result.points + ' pt';
+            await initApp();
+          } else {
+            // パスワード未設定または認証失敗 ➔ 記憶を消去してログイン画面を表示
+            localStorage.clear();
+          }
+        } catch (err) {
+          console.error(err);
+          // 通信エラー時はlocalStorageを消さない（電波が弱い場合でもログアウトさせない）
+          // 単純にログイン画面を表示するだけにする
+        }
       }
     });
   </script>
 </body>
+
 </html>

@@ -1,1 +1,17 @@
+GASのURL
 https://script.google.com/macros/s/AKfycbx5pTAK5Y7M3fO_UVkIgZjO4juTMcyzu5cV-_syQLzP3oN6v_Gb631W-JHaBRgdQ7befQ/exec
+
+GASのエディタ
+https://script.google.com/u/0/home/projects/15-7yjKgz5M8tJhQGpLRMHddyx44kCs3Nd1Tm8NdeJkla3IKbEAmkcEvQ/edit
+
+Spreadsheet
+https://docs.google.com/spreadsheets/d/1_Qp048aPiVTU_c3C2o_bIU-C6v9OJU15uWy7azdddT4/edit?gid=0#gid=0
+
+App
+https://makotoito-keio.github.io/derby-system/
+
+GitHub
+https://github.com/makotoito-keio/derby-system/blob/main/index.html
+
+
+
