@@ -341,6 +341,39 @@
     // ========================================
     const $ = id => document.getElementById(id);
 
+    // ========================================
+    // クライアント側（スマホ側）キャッシュ管理
+    // ========================================
+    const clientCache = {
+      races: { data: null, expiresAt: 0 },
+      ranking: { data: null, expiresAt: 0 },
+      myBets: { data: null, expiresAt: 0 }
+    };
+    const CACHE_TTL = 30 * 1000; // 30秒保持
+
+    function getCache(key) {
+      if (clientCache[key].data && Date.now() < clientCache[key].expiresAt) {
+        return clientCache[key].data;
+      }
+      return null;
+    }
+
+    function setCache(key, data) {
+      clientCache[key].data = data;
+      clientCache[key].expiresAt = Date.now() + CACHE_TTL;
+    }
+
+    function clearCache(key) {
+      clientCache[key].data = null;
+      clientCache[key].expiresAt = 0;
+    }
+    
+    function clearAllCache() {
+      clearCache('races');
+      clearCache('ranking');
+      clearCache('myBets');
+    }
+
     // レース出走情報の保持（モーダルから参照）
     const raceCompetitors = {};
 
@@ -488,9 +521,6 @@
         await loadRanking(true);
       }
     });
-        await loadRanking();
-      }
-    });
 
     // ========================================
     // タブ切り替え
@@ -540,39 +570,6 @@
       if (!timeInput) return null;
       const str = String(timeInput).trim();
       let hours = null, minutes = null, seconds = 0;
-
-      // ========================================
-      // クライアント側（スマホ側）キャッシュ管理
-      // ========================================
-      const clientCache = {
-        races: { data: null, expiresAt: 0 },
-        ranking: { data: null, expiresAt: 0 },
-        myBets: { data: null, expiresAt: 0 }
-      };
-      const CACHE_TTL = 30 * 1000; // 30秒保持
-
-      function getCache(key) {
-        if (clientCache[key].data && Date.now() < clientCache[key].expiresAt) {
-          return clientCache[key].data;
-        }
-        return null;
-      }
-
-      function setCache(key, data) {
-        clientCache[key].data = data;
-        clientCache[key].expiresAt = Date.now() + CACHE_TTL;
-      }
-
-      function clearCache(key) {
-        clientCache[key].data = null;
-        clientCache[key].expiresAt = 0;
-      }
-      
-      function clearAllCache() {
-        clearCache('races');
-        clearCache('ranking');
-        clearCache('myBets');
-      }
 
       // 文字列の中に HH:MM または HH:MM:SS が含まれるか正規表現で直接検索 (1899-12-30T03:00:00.000Z なども含む)
       const match = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
