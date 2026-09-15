@@ -1360,10 +1360,6 @@
           card.style.animationDelay = (i * 0.07) + 's';
           container.appendChild(card);
         });
-      } catch (err) {
-        console.error('レース情報の取得に失敗:', err);
-        loading.innerHTML = '<p class="text-red-400 text-sm">レース情報の取得に失敗しました。<br>ページを再読み込みしてください。</p>';
-      }
     }
 
     // ========================================
