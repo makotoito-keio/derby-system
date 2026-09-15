@@ -361,25 +361,11 @@
 
     let firstTimeUserName = '';
 
-    // ========================================
-    // PINのハッシュ化（SHA-256）
-    // ========================================
-    async function hashPIN(pin) {
-      if (!pin) return '';
-      const encoder = new TextEncoder();
-      const data = encoder.encode(pin);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
     $('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const name = $('loginName').value.trim();
       const pin = $('loginPin').value.trim();
       if (!name) return;
-
-      const hashedPin = await hashPIN(pin);
 
       const loginBtn = $('loginBtn');
       loginBtn.disabled = true;
@@ -387,8 +373,7 @@
       $('loginError').classList.add('hidden');
 
       try {
-        // ハッシュ化されたPINをサーバーに送信して検証
-        const result = await verifyLogin(name, hashedPin);
+        const result = await verifyLogin(name, pin);
 
         if (result.success) {
           if (result.isFirstTime) {
@@ -404,9 +389,9 @@
               $('loginError').classList.remove('hidden');
               return;
             }
-            // PIN一致でログイン完了（localStorageにはハッシュ化されたPINを保存）
+            // PIN一致でログイン完了（localStorageには平文PINを保存）
             localStorage.setItem('userName', result.name || name);
-            localStorage.setItem('userPin', hashedPin);
+            localStorage.setItem('userPin', pin);
             $('loginModal').classList.add('hidden');
             $('app').classList.remove('hidden');
             $('userPoints').textContent = result.points + ' pt';
@@ -462,14 +447,14 @@
         const result = await response.json();
 
         if (result.success) {
-          const hashedPin = await hashPIN(newPin); // localStorageにはハッシュ化して保存
           localStorage.setItem('userName', firstTimeUserName);
-          localStorage.setItem('userPin', hashedPin);
+          localStorage.setItem('userPin', newPin); // 平文PINを保存
           showToast('✅ 暗証番号の設定が完了しました！');
           $('loginModal').classList.add('hidden');
           $('app').classList.remove('hidden');
+          clearAllCache();
           $('userPoints').textContent = (result.newPt || 1000) + ' pt';
-          await initApp();
+          await initApp(true);
         } else {
           $('loginError').textContent = result.message || '設定の保存に失敗しました';
           $('loginError').classList.remove('hidden');
@@ -495,11 +480,14 @@
     // 手動更新ボタン
     $('refreshBtn').addEventListener('click', async () => {
       showToast('🔄 情報を更新中...');
-      await initApp();
+      await initApp(true);
       if (!$('sectionHistory').classList.contains('hidden')) {
-        await loadMyBets();
+        await loadMyBets(true);
       }
       if (!$('sectionRanking').classList.contains('hidden')) {
+        await loadRanking(true);
+      }
+    });
         await loadRanking();
       }
     });
@@ -552,6 +540,39 @@
       if (!timeInput) return null;
       const str = String(timeInput).trim();
       let hours = null, minutes = null, seconds = 0;
+
+      // ========================================
+      // クライアント側（スマホ側）キャッシュ管理
+      // ========================================
+      const clientCache = {
+        races: { data: null, expiresAt: 0 },
+        ranking: { data: null, expiresAt: 0 },
+        myBets: { data: null, expiresAt: 0 }
+      };
+      const CACHE_TTL = 30 * 1000; // 30秒保持
+
+      function getCache(key) {
+        if (clientCache[key].data && Date.now() < clientCache[key].expiresAt) {
+          return clientCache[key].data;
+        }
+        return null;
+      }
+
+      function setCache(key, data) {
+        clientCache[key].data = data;
+        clientCache[key].expiresAt = Date.now() + CACHE_TTL;
+      }
+
+      function clearCache(key) {
+        clientCache[key].data = null;
+        clientCache[key].expiresAt = 0;
+      }
+      
+      function clearAllCache() {
+        clearCache('races');
+        clearCache('ranking');
+        clearCache('myBets');
+      }
 
       // 文字列の中に HH:MM または HH:MM:SS が含まれるか正規表現で直接検索 (1899-12-30T03:00:00.000Z なども含む)
       const match = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
@@ -973,6 +994,9 @@
           activeRaceBetIds.add(String(currentBetData.raceId));
           $('betModal').classList.add('hidden');
           showToast('✅ ベット完了！');
+          
+          // キャッシュを破棄して最新データを取得できるようにする
+          clearAllCache();
         } else {
           showBetError(result.message || 'ベットに失敗しました');
         }
@@ -1024,23 +1048,32 @@
     // ========================================
     // ランキング読み込み（Usersシートを流用）
     // ========================================
-    async function loadRanking() {
+    async function loadRanking(forceRefresh = false) {
       const body = $('rankingBody');
       const myRankCard = $('myRankCard');
-      body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm font-medium">読み込み中...</td></tr>';
-      myRankCard.classList.add('hidden');
+
+      let data = forceRefresh ? null : getCache('ranking');
+
+      if (!data) {
+        body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-white/40 text-sm font-medium">読み込み中...</td></tr>';
+        myRankCard.classList.add('hidden');
+        try {
+          const res = await fetch(GAS_URL + '?action=ranking');
+          data = await res.json();
+          setCache('ranking', data);
+        } catch (err) {
+          body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-red-400 text-sm">取得に失敗しました</td></tr>';
+          return;
+        }
+      }
 
       const currentUserName = (localStorage.getItem('userName') || localStorage.getItem('userId') || '').replace(/[\s\u3000]/g, '').toLowerCase();
 
-      try {
-        const res = await fetch(GAS_URL + '?action=ranking');
-        const data = await res.json();
+      // ポイント降順でソート
+      data.sort((a, b) => (parseInt(b['所持ポイント'] || b['ポイント'] || 0) - (parseInt(a['所持ポイント'] || a['ポイント'] || 0))));
 
-        // ポイント降順でソート
-        data.sort((a, b) => (parseInt(b['所持ポイント'] || b['ポイント'] || 0) - (parseInt(a['所持ポイント'] || a['ポイント'] || 0))));
-
-        body.innerHTML = '';
-        let myData = null;
+      body.innerHTML = '';
+      let myData = null;
         let myRankNumber = 0;
 
         data.forEach((user, i) => {
@@ -1106,9 +1139,8 @@
     // ========================================
     // ベット履歴読み込み＆削除（キャンセル）処理
     // ========================================
-    async function loadMyBets() {
+    async function loadMyBets(forceRefresh = false) {
       const container = $('historyList');
-      container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">読み込み中...</p>';
       const userName = localStorage.getItem('userName') || localStorage.getItem('userId');
 
       if (!userName) {
@@ -1116,14 +1148,24 @@
         return;
       }
 
-      try {
-        const url = GAS_URL + '?action=myBets&name=' + encodeURIComponent(userName);
-        const res = await fetch(url);
-        const bets = await res.json();
+      let bets = forceRefresh ? null : getCache('myBets');
 
-        container.innerHTML = '';
+      if (!bets) {
+        container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">読み込み中...</p>';
+        try {
+          const url = GAS_URL + '?action=myBets&name=' + encodeURIComponent(userName);
+          const res = await fetch(url);
+          bets = await res.json();
+          setCache('myBets', bets);
+        } catch (err) {
+          container.innerHTML = '<p class="text-center text-red-400 text-sm py-8">取得に失敗しました</p>';
+          return;
+        }
+      }
 
-        // ステータスで仕分け
+      container.innerHTML = '';
+
+      // ステータスで仕分け
         const activeBets = bets.filter(b => { const s = b.status || ''; return !s.includes('的中') && !s.includes('確定') && !s.includes('キャンセル'); });
         const resultedBets = bets.filter(b => { const s = b.status || ''; return s === '的中' || s === '不的中'; });
 
@@ -1242,6 +1284,7 @@
         if (result.success) {
           showToast('✅ ベットを取り消し返金しました');
           $('userPoints').textContent = result.newPt + ' pt';
+          clearAllCache(); // キャッシュを破棄
 
           // 画面全体の再ロードではなく、押されたカードだけをサッと消去する
           if (targetCard) {
@@ -1271,20 +1314,35 @@
     // ========================================
     // アプリ初期化: レース情報取得 (GET)
     // ========================================
-    async function initApp() {
+    async function initApp(forceRefresh = false) {
       const container = $('raceList');
       const loading = $('loadingIndicator');
-      container.innerHTML = '';
-      clearCountdowns();
 
-      try {
-        const response = await fetch(GAS_URL);
-        const races = await response.json();
-        loading.classList.add('hidden');
-        if (!races || races.length === 0) {
-          container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">現在レース情報はありません</p>';
+      let races = forceRefresh ? null : getCache('races');
+
+      if (!races) {
+        container.innerHTML = '';
+        loading.classList.remove('hidden');
+        clearCountdowns();
+        try {
+          const response = await fetch(GAS_URL);
+          races = await response.json();
+          setCache('races', races);
+        } catch (err) {
+          console.error('レース情報の取得に失敗:', err);
+          loading.innerHTML = '<p class="text-red-400 text-sm">レース情報の取得に失敗しました。<br>ページを再読み込みしてください。</p>';
           return;
         }
+      } else {
+        container.innerHTML = '';
+        clearCountdowns();
+        loading.classList.add('hidden');
+      }
+
+      if (!races || races.length === 0) {
+        container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">現在レース情報はありません</p>';
+        return;
+      }
 
         // レースIDごとにグループ化する処理
         const groupedRaces = {};
