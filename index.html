@@ -246,12 +246,57 @@
     </section>
   </div>
 
-  <!-- ===== ベット確認モーダル ===== -->
+  <!-- ===== ベット確認モーダル（3人予想） ===== -->
   <div id="betModal"
     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-    <div class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20">
-      <h2 class="text-lg font-bold text-gray-900 mb-1">ベットする</h2>
-      <p id="betTargetInfo" class="text-sm text-gray-500 mb-4"></p>
+    <div class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20 max-h-[90vh] overflow-y-auto">
+      <h2 id="betModalTitle" class="text-lg font-bold text-gray-900 mb-1">ベットする</h2>
+      <p id="betTargetInfo" class="text-sm text-gray-500 mb-3"></p>
+
+      <!-- 出走表（参照用） -->
+      <div id="betRefTable" class="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-200">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">出走表</p>
+        <div id="betRefList" class="space-y-1 text-xs"></div>
+      </div>
+
+      <!-- 3人予想入力 -->
+      <div class="space-y-3 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-amber-600 mb-1">🥇 1着予想</label>
+          <select id="pick1"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition bg-white">
+            <option value="">-- 選手を選択 --</option>
+          </select>
+          <p id="pick1Info" class="text-xs text-gray-400 mt-0.5 h-4"></p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 mb-1">🥈 2着予想</label>
+          <select id="pick2"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition bg-white">
+            <option value="">-- 選手を選択 --</option>
+          </select>
+          <p id="pick2Info" class="text-xs text-gray-400 mt-0.5 h-4"></p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-orange-700 mb-1">🥉 3着予想</label>
+          <select id="pick3"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition bg-white">
+            <option value="">-- 選手を選択 --</option>
+          </select>
+          <p id="pick3Info" class="text-xs text-gray-400 mt-0.5 h-4"></p>
+        </div>
+      </div>
+
+      <!-- 合成オッズ表示 -->
+      <div id="oddsPreview" class="bg-brand-50 rounded-xl p-3 mb-4 border border-brand-200 hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-brand-600">合成オッズ（全的中時）</span>
+          <span id="combinedOdds" class="text-lg font-black text-brand-700">--</span>
+        </div>
+        <div id="maxPayout" class="text-right text-xs text-brand-500 font-bold mt-1"></div>
+      </div>
+
+      <!-- ポイント入力 -->
       <div class="mb-4">
         <label class="block text-sm font-semibold text-gray-700 mb-1" for="betAmount">賭けるポイント</label>
         <input type="number" id="betAmount" min="1" inputmode="numeric"
@@ -281,6 +326,9 @@
     // ユーティリティ
     // ========================================
     const $ = id => document.getElementById(id);
+
+    // レース出走情報の保持（モーダルから参照）
+    const raceCompetitors = {};
 
     // ========================================
     // ログイン処理（GAS認証）
@@ -602,9 +650,14 @@
           <!-- 出走表の見出し（ヘッダー行） -->
           <div class="flex items-center justify-between text-[11px] font-bold text-gray-400 px-2 pb-1 border-b border-gray-100">
             <span>レーン / 選手名 / 持ちタイム</span>
-            <span>単勝オッズ / BET</span>
+            <span>オッズ</span>
           </div>
           <div class="competitor-list divide-y divide-gray-50"></div>
+          <!-- レース単位のBETボタン -->
+          <button class="race-bet-btn w-full mt-3 bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-bold px-4 py-3 rounded-xl hover:from-brand-700 hover:to-brand-600 active:scale-[0.98] transition-all shadow-lg shadow-brand-500/30"
+            data-race-id="${raceId}">
+            🏇 このレースにBET
+          </button>
         </div>
       `;
 
@@ -632,6 +685,14 @@
         return laneA - laneB;
       });
 
+      // レース出走情報をグローバルに保持（モーダルで参照）
+      raceCompetitors[raceId] = sortedGroup.map(c => ({
+        lane: c['レーン'] || c.lane || '',
+        athlete: c['選手名'] || c.athlete || '',
+        odds: c['単勝オッズ'] || c['オッズ'] || c.odds || '',
+        time: c['持ちタイム'] || c['タイム'] || c.time || c.personalBest || '--'
+      }));
+
       sortedGroup.forEach(competitor => {
         const lane = competitor['レーン'] || competitor.lane || '';
         const athlete = competitor['選手名'] || competitor.athlete || '';
@@ -654,10 +715,6 @@
             <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">
               × ${odds || '未設定'}
             </span>
-            <button class="bet-btn bg-gradient-to-r from-brand-600 to-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:from-brand-700 hover:to-brand-600 active:scale-95 transition-all shadow-sm"
-              data-race-id="${raceId}" data-athlete="${athlete}" data-odds="${odds}">
-              BET
-            </button>
           </div>
         `;
         listContainer.appendChild(row);
@@ -690,23 +747,117 @@
     }
 
     // ========================================
-    // ベットモーダル
+    // ベットモーダル（3人予想）
     // ========================================
     let currentBetData = {};
 
+    // モーダルのセレクト更新
+    function populateBetModal(raceId) {
+      const competitors = raceCompetitors[raceId];
+      if (!competitors) return;
+
+      // 出走表参照リスト
+      const refList = $('betRefList');
+      refList.innerHTML = competitors.map(c =>
+        `<div class="flex items-center justify-between py-1 px-1">
+          <span><span class="inline-block w-5 h-5 rounded-full bg-gray-800 text-white text-[10px] font-bold text-center leading-5 mr-1.5">${c.lane}</span>${c.athlete}</span>
+          <span class="font-bold text-brand-600">×${c.odds || '?'}</span>
+        </div>`
+      ).join('');
+
+      // セレクトボックスにオプション追加
+      ['pick1', 'pick2', 'pick3'].forEach(id => {
+        const sel = $(id);
+        sel.innerHTML = '<option value="">-- 選手を選択 --</option>';
+        competitors.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.lane;
+          opt.textContent = `レーン ${c.lane} - ${c.athlete}（×${c.odds || '?'}）`;
+          sel.appendChild(opt);
+        });
+        $(id + 'Info').textContent = '';
+      });
+
+      updateOddsPreview();
+    }
+
+    // オッズプレビュー計算
+    function updateOddsPreview() {
+      const raceId = currentBetData.raceId;
+      const competitors = raceCompetitors[raceId];
+      if (!competitors) return;
+
+      const picks = ['pick1', 'pick2', 'pick3'].map(id => $(id).value);
+      const selected = picks.filter(p => p !== '');
+
+      // 各ピックの情報を表示
+      picks.forEach((lane, i) => {
+        const infoEl = $(`pick${i + 1}Info`);
+        if (lane) {
+          const comp = competitors.find(c => String(c.lane) === String(lane));
+          if (comp) {
+            infoEl.textContent = `${comp.athlete}  オッズ ×${comp.odds}`;
+            infoEl.className = 'text-xs text-brand-600 font-bold mt-0.5 h-4';
+          }
+        } else {
+          infoEl.textContent = '';
+          infoEl.className = 'text-xs text-gray-400 mt-0.5 h-4';
+        }
+      });
+
+      // 重複チェック
+      const uniquePicks = new Set(selected);
+      if (uniquePicks.size < selected.length) {
+        showBetError('同じ選手を2回以上選ぶことはできません');
+      } else {
+        $('betError').classList.add('hidden');
+      }
+
+      // 合成オッズ計算
+      if (selected.length === 3 && uniquePicks.size === 3) {
+        let combined = 1;
+        selected.forEach(lane => {
+          const comp = competitors.find(c => String(c.lane) === String(lane));
+          if (comp && comp.odds) combined *= parseFloat(comp.odds);
+        });
+        $('combinedOdds').textContent = `×${combined.toFixed(1)}`;
+        $('oddsPreview').classList.remove('hidden');
+
+        const betAmt = parseInt($('betAmount').value, 10) || 0;
+        if (betAmt > 0) {
+          $('maxPayout').textContent = `最大払い戻し: ${Math.floor(betAmt * combined).toLocaleString()} pt`;
+        } else {
+          $('maxPayout').textContent = '';
+        }
+      } else {
+        $('oddsPreview').classList.add('hidden');
+      }
+    }
+
+    // セレクト変更時にオッズ再計算
+    ['pick1', 'pick2', 'pick3'].forEach(id => {
+      $(id).addEventListener('change', updateOddsPreview);
+    });
+
+    // ポイント入力時にも最大払い戻しを更新
+    $('betAmount').addEventListener('input', updateOddsPreview);
+
+    // BETボタンクリック → モーダル表示
     document.addEventListener('click', e => {
-      const btn = e.target.closest('.bet-btn');
+      const btn = e.target.closest('.race-bet-btn');
       if (!btn) return;
-      currentBetData = {
-        raceId: btn.dataset.raceId,
-        athlete: btn.dataset.athlete,
-        odds: btn.dataset.odds,
-      };
-      $('betTargetInfo').textContent = `${currentBetData.athlete}（オッズ ×${currentBetData.odds}）にベットします`;
+      const raceId = btn.dataset.raceId;
+      currentBetData = { raceId };
+
+      const competitors = raceCompetitors[raceId];
+      const subject = competitors ? '' : '';
+      $('betModalTitle').textContent = `レース ${raceId} にベット`;
+      $('betTargetInfo').textContent = '1着・2着・3着を予想してください';
       $('betAmount').value = '';
       $('betError').classList.add('hidden');
       $('betConfirm').disabled = false;
       $('betConfirm').textContent = 'ベットする';
+      populateBetModal(raceId);
       $('betModal').classList.remove('hidden');
     });
 
@@ -715,12 +866,27 @@
     });
 
     // ========================================
-    // ベット送信処理（POST → GAS）
+    // ベット送信処理（POST → GAS）3人予想版
     // ========================================
     $('betConfirm').addEventListener('click', async () => {
       const amount = parseInt($('betAmount').value, 10);
       if (!amount || amount <= 0) {
         showBetError('1以上のポイントを入力してください');
+        return;
+      }
+
+      const pick1 = $('pick1').value;
+      const pick2 = $('pick2').value;
+      const pick3 = $('pick3').value;
+
+      if (!pick1 || !pick2 || !pick3) {
+        showBetError('1着・2着・3着の3人を全て選択してください');
+        return;
+      }
+
+      const picks = [pick1, pick2, pick3];
+      if (new Set(picks).size < 3) {
+        showBetError('同じ選手を2回以上選ぶことはできません');
         return;
       }
 
@@ -740,7 +906,9 @@
             userName: userName,
             pin: pin,
             raceId: currentBetData.raceId,
-            betAthlete: currentBetData.athlete,
+            pick1: pick1,
+            pick2: pick2,
+            pick3: pick3,
             betPt: amount,
           }),
         });
@@ -748,7 +916,6 @@
         const result = await response.json();
 
         if (result.success) {
-          // 成功 → ポイント表示を更新してモーダルを閉じる
           $('userPoints').textContent = result.newPt + ' pt';
           $('betModal').classList.add('hidden');
           showToast('✅ ベット完了！');
@@ -897,13 +1064,18 @@
           
           const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
+          // 3人予想表示
+          const pickDisplay = (b.pick1 && b.pick2 && b.pick3)
+            ? `🥇${b.pick1} 🥈${b.pick2} 🥉${b.pick3}`
+            : (b.athlete || '---');
+
           card.innerHTML = `
             <div>
               <div class="flex items-center gap-2 mb-1">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800">レース ${b.raceId}</span>
                 <span class="text-xs text-gray-400">${dateStr}</span>
               </div>
-              <p class="font-bold text-gray-900 text-sm">${b.athlete}</p>
+              <p class="font-bold text-gray-900 text-sm">${pickDisplay}</p>
               <p class="text-xs font-bold text-brand-600 mt-0.5">${b.betPt} pt 賭け中</p>
             </div>
             <button class="cancel-bet-btn bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
