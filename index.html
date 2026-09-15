@@ -7,17 +7,21 @@
   <title>ALL KEIO DERBY</title>
   <meta name="description" content="ALL KEIO DERBY Betting System" />
   <!-- Tailwind CSS (本番運用用スタイルシート) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" integrity="sha512-wnea99cKBU3JHveKreWEeG0sRZjJPu9ZXFHup/iJGZXS39UXRBnsvqPUPRLYQ5lSaQpjiE93ijhvjGfU3+boGQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+    integrity="sha512-wnea99cKBU3JHveKreWEeG0sRZjJPu9ZXFHup/iJGZXS39UXRBnsvqPUPRLYQ5lSaQpjiE93ijhvjGfU3+boGQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap"
+    rel="stylesheet" />
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { 
+          fontFamily: {
             sans: ['Inter', 'sans-serif'],
             display: ['Outfit', 'sans-serif'],
           },
@@ -171,19 +175,27 @@
   <!-- ===== メインコンテンツ ===== -->
   <div id="app" class="hidden max-w-md mx-auto pb-8">
     <!-- ヘッダー -->
-    <header class="sticky top-0 z-40 glass border-b border-white/20 px-4 py-3 flex items-center justify-between shadow-sm">
+    <header
+      class="sticky top-0 z-40 glass border-b border-white/20 px-4 py-3 flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-2">
         <h1 class="text-lg font-logo text-gray-900 tracking-wider">ALL KEIO DERBY</h1>
       </div>
       <div class="flex items-center gap-2">
-        <span id="userPoints" class="text-sm font-extrabold text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">-- pt</span>
-        <button id="refreshBtn" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="手動更新">更新</button>
-        <button id="logoutBtn" class="text-xs bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 font-bold px-2 py-1.5 rounded-lg transition" title="ログアウト">退出</button>
+        <span id="userPoints"
+          class="text-sm font-extrabold text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">--
+          pt</span>
+        <button id="refreshBtn"
+          class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2.5 py-1.5 rounded-lg transition"
+          title="手動更新">更新</button>
+        <button id="logoutBtn"
+          class="text-xs bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 font-bold px-2 py-1.5 rounded-lg transition"
+          title="ログアウト">退出</button>
       </div>
     </header>
 
     <!-- 締切1分前・点滅警告バー -->
-    <div id="warningBanner" class="hidden sticky top-[57px] z-30 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 text-white font-black text-xs py-2 px-4 text-center shadow-lg animate-pulse border-b border-amber-300/40">
+    <div id="warningBanner"
+      class="hidden sticky top-[57px] z-30 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 text-white font-black text-xs py-2 px-4 text-center shadow-lg animate-pulse border-b border-amber-300/40">
       <span id="warningText">まもなく締め切り！急いでベットしよう！</span>
     </div>
 
@@ -225,7 +237,8 @@
     <!-- 順位表 -->
     <section id="sectionRanking" class="hidden px-4 mt-4 space-y-3">
       <!-- 自分のランク表示ピン留めカード -->
-      <div id="myRankCard" class="hidden bg-gradient-to-r from-amber-500/20 via-brand-500/20 to-amber-500/20 backdrop-blur rounded-2xl p-4 border border-amber-400/40 shadow-lg text-white">
+      <div id="myRankCard"
+        class="hidden bg-gradient-to-r from-amber-500/20 via-brand-500/20 to-amber-500/20 backdrop-blur rounded-2xl p-4 border border-amber-400/40 shadow-lg text-white">
         <!-- JSで動的に自分の順位情報を表示 -->
       </div>
 
@@ -249,7 +262,8 @@
   <!-- ===== ベット確認モーダル（3人予想） ===== -->
   <div id="betModal"
     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-    <div class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20 max-h-[90vh] overflow-y-auto">
+    <div
+      class="glass rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full max-w-md slide-up border border-white/20 max-h-[90vh] overflow-y-auto">
       <h2 id="betModalTitle" class="text-lg font-bold text-gray-900 mb-1">ベットする</h2>
       <p id="betTargetInfo" class="text-sm text-gray-500 mb-3"></p>
 
@@ -347,11 +361,25 @@
 
     let firstTimeUserName = '';
 
+    // ========================================
+    // PINのハッシュ化（SHA-256）
+    // ========================================
+    async function hashPIN(pin) {
+      if (!pin) return '';
+      const encoder = new TextEncoder();
+      const data = encoder.encode(pin);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     $('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const name = $('loginName').value.trim();
       const pin = $('loginPin').value.trim();
       if (!name) return;
+
+      const hashedPin = await hashPIN(pin);
 
       const loginBtn = $('loginBtn');
       loginBtn.disabled = true;
@@ -359,7 +387,8 @@
       $('loginError').classList.add('hidden');
 
       try {
-        const result = await verifyLogin(name, pin);
+        // ハッシュ化されたPINをサーバーに送信して検証
+        const result = await verifyLogin(name, hashedPin);
 
         if (result.success) {
           if (result.isFirstTime) {
@@ -375,9 +404,9 @@
               $('loginError').classList.remove('hidden');
               return;
             }
-            // PIN一致でログイン完了
+            // PIN一致でログイン完了（localStorageにはハッシュ化されたPINを保存）
             localStorage.setItem('userName', result.name || name);
-            localStorage.setItem('userPin', pin);
+            localStorage.setItem('userPin', hashedPin);
             $('loginModal').classList.add('hidden');
             $('app').classList.remove('hidden');
             $('userPoints').textContent = result.points + ' pt';
@@ -433,8 +462,9 @@
         const result = await response.json();
 
         if (result.success) {
+          const hashedPin = await hashPIN(newPin); // localStorageにはハッシュ化して保存
           localStorage.setItem('userName', firstTimeUserName);
-          localStorage.setItem('userPin', newPin);
+          localStorage.setItem('userPin', hashedPin);
           showToast('✅ 暗証番号の設定が完了しました！');
           $('loginModal').classList.add('hidden');
           $('app').classList.remove('hidden');
@@ -728,9 +758,13 @@
             const text = formatCountdown(targetTime);
             timerEl.textContent = text;
             if (text === '締切') {
-              card.querySelectorAll('.bet-btn').forEach(btn => {
+              // ★フールプルーフ1: 締切後はすべてのベットボタンを無効化
+              card.querySelectorAll('.bet-btn, .race-bet-btn').forEach(btn => {
                 btn.disabled = true;
-                btn.className = 'bg-gray-300 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-lg cursor-not-allowed';
+                btn.textContent = '締切済み';
+                btn.className = btn.classList.contains('race-bet-btn')
+                  ? 'race-bet-btn w-full mt-3 bg-gray-300 text-gray-500 text-sm font-bold px-4 py-3 rounded-xl cursor-not-allowed'
+                  : 'bg-gray-300 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-lg cursor-not-allowed';
               });
               timerEl.className = 'text-xs font-bold text-gray-400';
             }
@@ -750,6 +784,8 @@
     // ベットモーダル（3人予想）
     // ========================================
     let currentBetData = {};
+    // ★ 現在アクティブなベットがあるレースIDを追跡するセット（二重ベット警告用）
+    const activeRaceBetIds = new Set();
 
     // モーダルのセレクト更新
     function populateBetModal(raceId) {
@@ -771,7 +807,7 @@
         sel.innerHTML = '<option value="">-- 選手を選択 --</option>';
         competitors.forEach(c => {
           const opt = document.createElement('option');
-          opt.value = c.lane;
+          opt.value = c.athlete;  // ★選手名をvalueとして送信（レーン番号ではなく）
           opt.textContent = `レーン ${c.lane} - ${c.athlete}（×${c.odds || '?'}）`;
           sel.appendChild(opt);
         });
@@ -790,13 +826,13 @@
       const picks = ['pick1', 'pick2', 'pick3'].map(id => $(id).value);
       const selected = picks.filter(p => p !== '');
 
-      // 各ピックの情報を表示
-      picks.forEach((lane, i) => {
+      // 各ピックの情報を表示（valueは選手名）
+      picks.forEach((athleteName, i) => {
         const infoEl = $(`pick${i + 1}Info`);
-        if (lane) {
-          const comp = competitors.find(c => String(c.lane) === String(lane));
+        if (athleteName) {
+          const comp = competitors.find(c => c.athlete === athleteName);
           if (comp) {
-            infoEl.textContent = `${comp.athlete}  オッズ ×${comp.odds}`;
+            infoEl.textContent = `レーン${comp.lane}  オッズ ×${comp.odds}`;
             infoEl.className = 'text-xs text-brand-600 font-bold mt-0.5 h-4';
           }
         } else {
@@ -813,11 +849,11 @@
         $('betError').classList.add('hidden');
       }
 
-      // 合成オッズ計算
+      // 合成オッズ計算（valueは選手名なので選手名で検索）
       if (selected.length === 3 && uniquePicks.size === 3) {
         let combined = 1;
-        selected.forEach(lane => {
-          const comp = competitors.find(c => String(c.lane) === String(lane));
+        selected.forEach(athleteName => {
+          const comp = competitors.find(c => c.athlete === athleteName);
           if (comp && comp.odds) combined *= parseFloat(comp.odds);
         });
         $('combinedOdds').textContent = `×${combined.toFixed(1)}`;
@@ -826,6 +862,15 @@
         const betAmt = parseInt($('betAmount').value, 10) || 0;
         if (betAmt > 0) {
           $('maxPayout').textContent = `最大払い戻し: ${Math.floor(betAmt * combined).toLocaleString()} pt`;
+
+          // ★フールプルーフ2: 所持ポイント超過のリアルタイム警告
+          const currentPtText = $('userPoints') ? $('userPoints').textContent.replace(/[^0-9]/g, '') : '0';
+          const currentPt = parseInt(currentPtText, 10) || 0;
+          if (betAmt > currentPt) {
+            showBetError(`所持ポイント（${currentPt} pt）を超えています！`);
+          } else {
+            $('betError').classList.add('hidden');
+          }
         } else {
           $('maxPayout').textContent = '';
         }
@@ -846,11 +891,18 @@
     document.addEventListener('click', e => {
       const btn = e.target.closest('.race-bet-btn');
       if (!btn) return;
+      if (btn.disabled) return; // 締切済みボタンは無視
       const raceId = btn.dataset.raceId;
-      currentBetData = { raceId };
 
-      const competitors = raceCompetitors[raceId];
-      const subject = competitors ? '' : '';
+      // ★フールプルーフ4: 同じレースへの二重ベット警告
+      const existingActiveBet = document.querySelector(`#historyList .history-card`);
+      // historyListから現在表示中のアクティブなベットのraceIdを確認
+      // ※ activeRaceBetIds はベット成功時に更新するセット
+      if (activeRaceBetIds.has(String(raceId))) {
+        if (!confirm(`レース ${raceId} にはすでにベット中です。\n追加でさらにベットしますか？`)) return;
+      }
+
+      currentBetData = { raceId };
       $('betModalTitle').textContent = `レース ${raceId} にベット`;
       $('betTargetInfo').textContent = '1着・2着・3着を予想してください';
       $('betAmount').value = '';
@@ -917,6 +969,8 @@
 
         if (result.success) {
           $('userPoints').textContent = result.newPt + ' pt';
+          // アクティブベットセットに追加（二重ベット警告用）
+          activeRaceBetIds.add(String(currentBetData.raceId));
           $('betModal').classList.add('hidden');
           showToast('✅ ベット完了！');
         } else {
@@ -935,6 +989,24 @@
       const el = $('betError');
       el.textContent = msg;
       el.classList.remove('hidden');
+    }
+
+    // ========================================
+    // pick値（レーン番号 or 選手名）を選手名に解決するヘルパー
+    // 古いベットデータにはレーン番号が入っていることがあるため、両方に対応する
+    // ========================================
+    function resolveAthleteName(raceId, pick) {
+      if (!pick) return pick;
+      const pickStr = String(pick).trim();
+      // 数字のみの場合はレーン番号と判断し、raceCompetitorsから選手名を引く
+      if (/^\d+$/.test(pickStr)) {
+        const competitors = raceCompetitors[raceId];
+        if (competitors) {
+          const comp = competitors.find(c => String(c.lane) === pickStr);
+          if (comp) return comp.athlete;
+        }
+      }
+      return pickStr; // 既に選手名の場合はそのまま返す
     }
 
     // ========================================
@@ -966,7 +1038,7 @@
 
         // ポイント降順でソート
         data.sort((a, b) => (parseInt(b['所持ポイント'] || b['ポイント'] || 0) - (parseInt(a['所持ポイント'] || a['ポイント'] || 0))));
-        
+
         body.innerHTML = '';
         let myData = null;
         let myRankNumber = 0;
@@ -1051,40 +1123,87 @@
 
         container.innerHTML = '';
 
-        if (!bets || bets.length === 0) {
-          container.innerHTML = '<p class="text-center text-white/50 text-sm py-8">まだベット履歴がありません</p>';
-          return;
-        }
+        // ステータスで仕分け
+        const activeBets = bets.filter(b => { const s = b.status || ''; return !s.includes('的中') && !s.includes('確定') && !s.includes('キャンセル'); });
+        const resultedBets = bets.filter(b => { const s = b.status || ''; return s === '的中' || s === '不的中'; });
 
-        // 新しい順にソートして表示 (コピーを作成して反転)
-        const sortedBets = [...bets].reverse();
-        sortedBets.forEach(b => {
-          const card = document.createElement('div');
-          card.className = 'history-card bg-white/95 backdrop-blur rounded-xl p-4 shadow-md border border-white/30 flex items-center justify-between transition-all duration-300';
-          
-          const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        // ---- セクション1: 進行中のベット ----
+        const activeSection = document.createElement('div');
+        activeSection.innerHTML = `<p class="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">🏇 進行中のベット</p>`;
 
-          // 3人予想表示
-          const pickDisplay = (b.pick1 && b.pick2 && b.pick3)
-            ? `🥇${b.pick1} 🥈${b.pick2} 🥉${b.pick3}`
-            : (b.athlete || '---');
-
-          card.innerHTML = `
-            <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800">レース ${b.raceId}</span>
-                <span class="text-xs text-gray-400">${dateStr}</span>
+        if (activeBets.length === 0) {
+          activeSection.innerHTML += '<p class="text-center text-white/40 text-sm py-4 bg-white/5 rounded-xl">進行中のベットはありません</p>';
+        } else {
+          [...activeBets].reverse().forEach(b => {
+            const card = document.createElement('div');
+            card.className = 'history-card bg-white/95 backdrop-blur rounded-xl p-4 shadow-md border border-white/30 flex items-center justify-between transition-all duration-300 mb-2';
+            const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            // pick値がレーン番号の場合も選手名に変換して表示
+            const p1 = resolveAthleteName(b.raceId, b.pick1);
+            const p2 = resolveAthleteName(b.raceId, b.pick2);
+            const p3 = resolveAthleteName(b.raceId, b.pick3);
+            const pickDisplay = (p1 && p2 && p3) ? `🥇${p1} 🥈${p2} 🥉${p3}` : (b.athlete || '---');
+            card.innerHTML = `
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800">レース ${b.raceId}</span>
+                  <span class="text-xs text-gray-400">${dateStr}</span>
+                </div>
+                <p class="font-bold text-gray-900 text-sm">${pickDisplay}</p>
+                <p class="text-xs font-bold text-brand-600 mt-0.5">${b.betPt} pt 賭け中</p>
               </div>
-              <p class="font-bold text-gray-900 text-sm">${pickDisplay}</p>
-              <p class="text-xs font-bold text-brand-600 mt-0.5">${b.betPt} pt 賭け中</p>
-            </div>
-            <button class="cancel-bet-btn bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
-              data-row-index="${b.rowIndex}">
-              取り消す
-            </button>
-          `;
-          container.appendChild(card);
-        });
+              <button class="cancel-bet-btn bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
+                data-row-index="${b.rowIndex}">
+                取り消す
+              </button>
+            `;
+            activeSection.appendChild(card);
+          });
+        }
+        container.appendChild(activeSection);
+
+        // ---- セクション2: 結果済みのレース ----
+        const resultSection = document.createElement('div');
+        resultSection.className = 'mt-5';
+        resultSection.innerHTML = `<p class="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">🏁 レース結果</p>`;
+
+        if (resultedBets.length === 0) {
+          resultSection.innerHTML += '<p class="text-center text-white/40 text-sm py-4 bg-white/5 rounded-xl">確定済みのレースはまだありません</p>';
+        } else {
+          [...resultedBets].reverse().forEach(b => {
+            const isHit = b.status === '的中';
+            const card = document.createElement('div');
+            card.className = `rounded-xl p-4 shadow-md border mb-2 transition-all ${isHit ? 'bg-gradient-to-r from-emerald-500/20 to-green-400/10 border-emerald-400/40' : 'bg-white/10 border-white/10'}`;
+
+            const dateStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            // pick値がレーン番号の場合も選手名に変換して表示
+            const p1 = resolveAthleteName(b.raceId, b.pick1);
+            const p2 = resolveAthleteName(b.raceId, b.pick2);
+            const p3 = resolveAthleteName(b.raceId, b.pick3);
+            const pickDisplay = (p1 && p2 && p3) ? `🥇${p1} 🥈${p2} 🥉${p3}` : (b.athlete || '---');
+            const hitCountDisplay = b.hitCount ? b.hitCount : '0/3';
+            const payoutDisplay = Number(b.payoutPt) > 0 ? `+${Number(b.payoutPt).toLocaleString()} pt` : '0 pt';
+
+            card.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isHit ? 'bg-emerald-100 text-emerald-800' : 'bg-white/20 text-white/60'}">レース ${b.raceId}</span>
+                    <span class="text-xs text-white/40">${dateStr}</span>
+                  </div>
+                  <p class="font-bold text-sm ${isHit ? 'text-white' : 'text-white/60'}">${pickDisplay}</p>
+                  <p class="text-xs text-white/50 mt-0.5">${b.betPt} pt 賭け  ／  ${hitCountDisplay} 的中</p>
+                </div>
+                <div class="text-right ml-3">
+                  <p class="text-[11px] font-bold ${isHit ? 'text-emerald-300' : 'text-white/30'} mb-0.5">${isHit ? '🎯 的中！' : '💨 不的中'}</p>
+                  <p class="text-lg font-black ${isHit ? 'text-emerald-300' : 'text-white/30'}">${payoutDisplay}</p>
+                </div>
+              </div>
+            `;
+            resultSection.appendChild(card);
+          });
+        }
+        container.appendChild(resultSection);
 
       } catch (err) {
         console.error(err);
@@ -1113,6 +1232,7 @@
           body: JSON.stringify({
             action: 'cancelBet',
             userName: userName,
+            pin: localStorage.getItem('userPin'),
             rowIndex: rowIndex
           }),
         });
@@ -1122,7 +1242,7 @@
         if (result.success) {
           showToast('✅ ベットを取り消し返金しました');
           $('userPoints').textContent = result.newPt + ' pt';
-          
+
           // 画面全体の再ロードではなく、押されたカードだけをサッと消去する
           if (targetCard) {
             targetCard.style.opacity = '0';
@@ -1212,8 +1332,8 @@
           }
         } catch (err) {
           console.error(err);
-          // エラー時も勝手にログインさせずログイン画面を表示
-          localStorage.clear();
+          // 通信エラー時はlocalStorageを消さない（電波が弱い場合でもログアウトさせない）
+          // 単純にログイン画面を表示するだけにする
         }
       }
     });
