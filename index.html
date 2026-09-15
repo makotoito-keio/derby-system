@@ -1128,10 +1128,6 @@
           `;
           myRankCard.classList.remove('hidden');
         }
-
-      } catch (err) {
-        body.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-red-400 text-sm">取得に失敗しました</td></tr>';
-      }
     }
     // ========================================
     // ベット履歴読み込み＆削除（キャンセル）処理
@@ -1243,11 +1239,6 @@
           });
         }
         container.appendChild(resultSection);
-
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = '<p class="text-center text-red-400 text-sm py-8">履歴の読み込みに失敗しました</p>';
-      }
     }
 
     // ベットの取り消し・返金処理
